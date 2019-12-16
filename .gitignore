@@ -203,3 +203,7 @@ fabric.properties
 # ignore data and output folders
 data/
 output/
+
+.DS_Store
+
+.idea/voice-corruption-classifier.iml
