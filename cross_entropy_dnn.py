@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 
-
+###https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py###
 ##download dataset and extract
 
 transform = transforms.Compose(
