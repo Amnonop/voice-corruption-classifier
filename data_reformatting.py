@@ -4,6 +4,11 @@ import scipy.io.wavfile as wav
 import ntpath
 from numpy.lib import stride_tricks
 from matplotlib import pyplot as plt
+import torch
+import torchvision
+
+#import torchaudio
+print("hi ", torch.__version__)  # prints 0.2.0a0+7d7342f
 
 output_folder = 'outputs'  # set your output folder and make sure it exists
 # short-time Fourier Transformation(STFT)
