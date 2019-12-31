@@ -6,27 +6,26 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from AudioDataset import AudioDataset
 
 
 ###https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py###
 ##download dataset and extract
 
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+#transform = transforms.Compose(
+ #   [transforms.ToTensor(),
+  #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
+trainset = AudioDataset(dataset_path='data/voice_data/data/clean_speach_train')
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
+                                          shuffle=True, num_workers=0)
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform)
+testset = AudioDataset('data/voice_data/data/clean_speach_test')
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=2)
+                                         shuffle=False, num_workers=0)
 
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+classes =  ('M', 'F')
+
 
 
 #showing an image for fun:
@@ -40,15 +39,15 @@ def imshow(img):
 
 # get some random training images
 dataiter = iter(trainloader)
-images, labels = dataiter.next()
+#images, labels = dataiter.next()
 
 # show images
-imshow(torchvision.utils.make_grid(images))
+#imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+#print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
 
 
 #define the nn:
@@ -56,9 +55,9 @@ optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv1d(2, 6, 5)
+        self.pool = nn.MaxPool1d(5)
+        self.conv2 = nn.Conv1d(2, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
@@ -75,6 +74,7 @@ class Net(nn.Module):
 
 net = Net()
 
+#ֳoptimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 #define loss function:
 
 criterion = nn.CrossEntropyLoss()
@@ -119,7 +119,7 @@ dataiter = iter(testloader)
 images, labels = dataiter.next()
 
 # print images
-imshow(torchvision.utils.make_grid(images))
+#imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 #privaate testing:
@@ -166,9 +166,9 @@ with torch.no_grad():
             class_total[label] += 1
 
 
-for i in range(10):
-    print('Accuracy of %5s : %2d %%' % (
-        classes[i], 100 * class_correct[i] / class_total[i]))
+#for i in range(10):
+#    print('Accuracy of %5s : %2d %%' % (
+#        classes[i], 100 * class_correct[i] / class_total[i]))
 
 
 
