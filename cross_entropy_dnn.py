@@ -6,7 +6,8 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from AudioDataset import AudioDataset
+from AudioDataset import AudioDataset, TrainTestSplitter
+from pathlib import Path
 
 
 ###https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py###
@@ -15,16 +16,18 @@ from AudioDataset import AudioDataset
 #transform = transforms.Compose(
  #   [transforms.ToTensor(),
   #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+csv_filepath = Path('data/clean_speech/spkrinfo.csv');
+train_test_splitter = TrainTestSplitter(csv_file=csv_filepath, test_ratio=0.2)
 
-trainset = AudioDataset(dataset_path='data/voice_data/data/clean_speach_train')
+trainset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=True)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=0)
 
-testset = AudioDataset('data/voice_data/data/clean_speach_test')
+testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=False)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=0)
 
-classes =  ('M', 'F')
+classes = ('M', 'F')
 
 
 
@@ -37,9 +40,9 @@ def imshow(img):
     plt.show()
 
 
-# get some random training images
+# get some random training files
 dataiter = iter(trainloader)
-#images, labels = dataiter.next()
+samples = dataiter.next()
 
 # show images
 #imshow(torchvision.utils.make_grid(images))

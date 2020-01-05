@@ -1,9 +1,15 @@
 import torch
 from pathlib import Path
 import pandas
-from scipy.io import wavfile
 from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
+import librosa
+import numpy as np
+
+
+AUDIO_LENGTH = 10000
+
+class_ids = {'M': 0, 'F': 1}
 
 
 class TrainTestSplitter:
@@ -38,16 +44,29 @@ class AudioDataset(Dataset):
     def __len__(self):
         return len(self.audio_frame)
 
+    def read_audio_file(self, filename):
+        audio, sampling_rate = librosa.load(filename)
+        audio = audio.reshape(-1, 1)
+
+        # All samples should have the same size
+        original_length = len(audio)
+        if original_length < AUDIO_LENGTH:
+            audio = np.concatenate((audio, np.zeros(shape=(AUDIO_LENGTH - original_length, 1))))
+        elif original_length > AUDIO_LENGTH:
+            audio = audio[0:AUDIO_LENGTH]
+        return audio
+
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        audio_filepath = Path(self.root_dir).joinpath(self.audio_frame['File'][idx])
+        audio_filepath = Path(self.root_dir).joinpath(self.audio_frame.iloc[idx, 2])
 
-        rate, data = wavfile.read(audio_filepath)
+        data = self.read_audio_file(audio_filepath)
 
-        label = self.csv_file['Sex'][idx]
+        label = self.audio_frame.iloc[idx, 1]
+        label_id = class_ids.get(label)
 
-        sample = {'audio': data, 'label': label}
+        sample = {'audio': data, 'label': label_id}
 
         return sample
