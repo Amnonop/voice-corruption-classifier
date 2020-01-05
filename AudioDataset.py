@@ -1,30 +1,53 @@
-import torch.utils.data as data
-import os
+import torch
 from pathlib import Path
 import pandas
 from scipy.io import wavfile
+from torch.utils.data import Dataset
+from sklearn.model_selection import train_test_split
 
 
-class AudioDataset(data.Dataset):
-    def __init__(self, dataset_path):
-        self.dataset_path = Path(dataset_path).joinpath('spkrinfo.csv')
+class TrainTestSplitter:
+    def __init__(self, csv_file, test_ratio):
+        self.data_frame = pandas.read_csv(csv_file)
+        self.train_set, self.test_set = train_test_split(self.data_frame, test_size=test_ratio, random_state=42)
 
-        if not self._check_exists():
-            raise RuntimeError(f'Dataset not found in {self.dataset_path}')
+    def get_train_set(self):
+        return self.train_set
 
-        self.csv_file = pandas.read_csv(self.dataset_path)#os.path.join(self.dataset_path, "spkrinfo.csv"))
+    def get_test_set(self):
+        return self.test_set
 
-    def _check_exists(self):
-        return self.dataset_path.exists()#os.path.exists(os.path.join(self.dataset_path, "spkrinfo.csv"))
+
+class AudioDataset(Dataset):
+    def __init__(self, train_test_splitter, csv_file, root_dir, is_train=True):
+        """
+        Args:
+            train_test_splitter (class): An instance of a TrainTestSplitter class
+            csv_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the audio files
+            is_train (bool): Indicates weather a training set is requested.
+        """
+        self.train_test_splitter = train_test_splitter
+        self.is_train = is_train
+        if self.is_train:
+            self.audio_frame = train_test_splitter.get_train_set()
+        else:
+            self.audio_frame = train_test_splitter.get_test_set()
+        self.root_dir = root_dir
 
     def __len__(self):
-        return self.csv_file.shape[0]
+        return len(self.audio_frame)
 
-    def __getitem__(self, item):
-        filename = self.csv_file['File'][item]
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
 
-        rate, data = wavfile.read(self.dataset_path)
+        audio_filepath = Path(self.root_dir).joinpath(self.audio_frame['File'][idx])
 
-        label = self.csv_file['Sex'][item]
+        rate, data = wavfile.read(audio_filepath)
 
-        return data, label
+        label = self.csv_file['Sex'][idx]
+
+        sample = {'audio': data, 'label': label}
+
+        return sample
