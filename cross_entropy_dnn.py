@@ -47,20 +47,17 @@ samples = dataiter.next()
 # show images
 #imshow(torchvision.utils.make_grid(images))
 # print labels
-#print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-criterion = nn.CrossEntropyLoss()
-
-
+print(' '.join('%5s' % classes[samples['label'][j]] for j in range(4)))
 
 #define the nn:
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv1d(2, 6, 5)
-        self.pool = nn.MaxPool1d(5)
-        self.conv2 = nn.Conv1d(2, 16, 5)
+        # Taken from the paper M3 (?)
+        self.conv1 = nn.Conv1d(in_channels=10000, out_channels=256, kernel_size=(80,1), stride=(4,1))
+        self.pool = nn.MaxPool1d(kernel_size=4)
+        self.conv2 = nn.Conv1d(in_channels=1, out_channels=256, kernel_size=(3,1), stride=1)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
@@ -91,7 +88,8 @@ for epoch in range(2):  # loop over the dataset multiple times
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
+        inputs = data['audio']
+        labels = data['label']
 
         # zero the parameter gradients
         optimizer.zero_grad()
