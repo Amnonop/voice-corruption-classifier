@@ -20,12 +20,10 @@ csv_filepath = Path('data/clean_speech/spkrinfo.csv');
 train_test_splitter = TrainTestSplitter(csv_file=csv_filepath, test_ratio=0.2)
 
 trainset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=True)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=0)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=0)
 
 testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=False)
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=0)
+testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=0)
 
 classes = ('M', 'F')
 
@@ -41,13 +39,13 @@ def imshow(img):
 
 
 # get some random training files
-dataiter = iter(trainloader)
-samples = dataiter.next()
+#dataiter = iter(trainloader)
+#samples = dataiter.next()
 
 # show images
 #imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[samples['label'][j]] for j in range(4)))
+#print(' '.join('%5s' % classes[samples['label'][j]] for j in range(4)))
 
 #define the nn:
 
@@ -55,20 +53,31 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # Taken from the paper M3 (?)
-        self.conv1 = nn.Conv1d(in_channels=10000, out_channels=256, kernel_size=(80,1), stride=(4,1))
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=256, kernel_size=80, stride=4)
+        self.bn1 = nn.BatchNorm1d(num_features=256)
         self.pool = nn.MaxPool1d(kernel_size=4)
-        self.conv2 = nn.Conv1d(in_channels=1, out_channels=256, kernel_size=(3,1), stride=1)
+        self.conv2 = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, stride=1)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
+        self.avg_pool = nn.AvgPool1d(154)
+        self.out = nn.Linear(256, 2)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.pool(F.relu(self.bn1(self.conv1(x))))
+        x = self.pool(F.relu(self.bn1(self.conv2(x))))
+
+        # Global avg pooling
+        x = self.avg_pool(x) # [batch_size, 256, 1]
+
+        # Dence
+        x = x.view(x.size(0), -1) # [batch_size, 256*1=256]
+        x = self.out(x) # [batch_size, 10]
+
+        #x = x.view(-1, 16 * 5 * 5)
+        #x = F.relu(self.fc1(x))
+        #x = F.relu(self.fc2(x))
+        #x = self.fc3(x)
         return x
 
 
@@ -76,7 +85,6 @@ net = Net()
 
 #ֳoptimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 #define loss function:
-
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
@@ -102,9 +110,9 @@ for epoch in range(2):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
+        if i % 20 == 19:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 2000))
+                  (epoch + 1, i + 1, running_loss / 20))
             running_loss = 0.0
 
 print('Finished Training')

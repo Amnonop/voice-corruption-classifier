@@ -46,15 +46,15 @@ class AudioDataset(Dataset):
 
     def read_audio_file(self, filename):
         audio, sampling_rate = librosa.load(filename)
-        audio = audio.reshape(-1, 1)
+        #audio = audio.reshape(1, -1)
 
         # All samples should have the same size
         original_length = len(audio)
         if original_length < AUDIO_LENGTH:
-            audio = np.concatenate((audio, np.zeros(shape=(AUDIO_LENGTH - original_length, 1))))
+            audio = np.concatenate((audio, np.zeros(shape=AUDIO_LENGTH - original_length)))
         elif original_length > AUDIO_LENGTH:
             audio = audio[0:AUDIO_LENGTH]
-        return audio
+        return audio.reshape(1, -1)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
