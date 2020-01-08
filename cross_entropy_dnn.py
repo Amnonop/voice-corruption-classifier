@@ -27,26 +27,6 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, n
 
 classes = ('M', 'F')
 
-
-
-#showing an image for fun:
-
-def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
-
-
-# get some random training files
-#dataiter = iter(trainloader)
-#samples = dataiter.next()
-
-# show images
-#imshow(torchvision.utils.make_grid(images))
-# print labels
-#print(' '.join('%5s' % classes[samples['label'][j]] for j in range(4)))
-
 #define the nn:
 
 class Net(nn.Module):
@@ -83,14 +63,12 @@ class Net(nn.Module):
 
 net = Net()
 
-#ֳoptimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-#define loss function:
+
+# define loss function:
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-#network training:
-
-
+# network training:
 for epoch in range(2):  # loop over the dataset multiple times
 
     running_loss = 0.0
@@ -117,31 +95,25 @@ for epoch in range(2):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-
 # save net state dict
-PATH = './cifar_net.pth'
+PATH = './speech_net.pth'
 torch.save(net.state_dict(), PATH)
 
-#test vs ground truth
+# test vs ground truth
 
 dataiter = iter(testloader)
-images, labels = dataiter.next()
-
-# print images
-#imshow(torchvision.utils.make_grid(images))
-print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-#privaate testing:
+data = dataiter.next()
+test_inputs = data['audio']
+test_labels = data['label']
 
 net = Net()
 net.load_state_dict(torch.load(PATH))
 
-outputs = net(images)
+outputs = net(test_inputs)
 
 _, predicted = torch.max(outputs, 1)
 
-print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-                              for j in range(4)))
+print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
 
 #performence on all dataset:
 
@@ -149,35 +121,35 @@ correct = 0
 total = 0
 with torch.no_grad():
     for data in testloader:
-        images, labels = data
-        outputs = net(images)
+        test_inputs = data['audio']
+        test_labels = data['label']
+        outputs = net(test_inputs)
         _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+        total += test_labels.size(0)
+        correct += (predicted == test_labels).sum().item()
 
-print('Accuracy of the network on the 10000 test images: %d %%' % (
+print('Accuracy of the network on the test set: %d %%' % (
     100 * correct / total))
 
-
-#accuracy analysis per category:
-
+# Accuracy analysis per category:
 class_correct = list(0. for i in range(10))
 class_total = list(0. for i in range(10))
 with torch.no_grad():
     for data in testloader:
-        images, labels = data
-        outputs = net(images)
+        test_inputs = data['audio']
+        test_labels = data['label']
+        outputs = net(test_inputs)
         _, predicted = torch.max(outputs, 1)
-        c = (predicted == labels).squeeze()
+        c = (predicted == test_labels).squeeze()
         for i in range(4):
-            label = labels[i]
+            label = test_labels[i]
             class_correct[label] += c[i].item()
             class_total[label] += 1
 
 
-#for i in range(10):
-#    print('Accuracy of %5s : %2d %%' % (
-#        classes[i], 100 * class_correct[i] / class_total[i]))
+for i in range(2):
+    print('Accuracy of %5s : %2d %%' % (
+        classes[i], 100 * class_correct[i] / class_total[i]))
 
 
 
