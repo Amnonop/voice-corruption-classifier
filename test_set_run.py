@@ -4,10 +4,12 @@ from pathlib import Path
 import torch.nn as nn
 from nn_modules import Net
 
-csv_filepath = Path('data/clean_speech/spkrinfo.csv')
-train_test_splitter = TrainTestSplitter(csv_file=csv_filepath, test_ratio=1)
+classes = ('M', 'F')
 
-testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=False)
+csv_filepath = Path('data/mf_test/spkrinfo.csv')
+train_test_splitter = TrainTestSplitter(csv_file=csv_filepath, test_ratio=0.9)
+
+testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/mf_test', is_train=False)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=0)
 
 # Path to the net's state dictionary
@@ -54,7 +56,7 @@ with torch.no_grad():
         outputs = net(test_inputs)
         _, predicted = torch.max(outputs, 1)
         c = (predicted == test_labels).squeeze()
-        for i in range(4):
+        for i in range(len(test_labels)):
             label = test_labels[i]
             class_correct[label] += c[i].item()
             class_total[label] += 1
