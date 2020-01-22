@@ -4,6 +4,7 @@ import torch.optim as optim
 from AudioDataset import AudioDataset, TrainTestSplitter
 from pathlib import Path
 from nn_modules import Net
+from matplotlib import pyplot as plt
 
 ###https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py###
 ##download dataset and extract
@@ -31,9 +32,12 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 # network training:
-for epoch in range(32):  # loop over the dataset multiple times
+num_epochs = 16
+train_loss_values = []
+for epoch in range(num_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
+    epoch_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
         inputs = data['audio']
@@ -50,12 +54,21 @@ for epoch in range(32):  # loop over the dataset multiple times
 
         # print statistics
         running_loss += loss.item()
+        epoch_loss += loss.item()
         if i % 20 == 19:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 20))
-            running_loss = 0.0
+                  (epoch + 1, i + 1, epoch_loss / 20))
+            epoch_loss = 0.0
+
+    # Save loss value for current epoch run
+    train_loss_values.append(running_loss / len(trainset))
 
 print('Finished Training')
+plt.title(f'Model Loss for {num_epochs} epochs')
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.plot(train_loss_values)
+plt.show()
 
 # save net state dict
 PATH = './speech_net.pth'
