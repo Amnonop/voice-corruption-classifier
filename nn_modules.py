@@ -10,6 +10,7 @@ class Net(nn.Module):
         self.bn1 = nn.BatchNorm1d(num_features=256)
         self.pool = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, stride=1)
+        self.bn2 = nn.BatchNorm1d(num_features=256)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
@@ -18,7 +19,7 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.relu(self.bn1(self.conv2(x))))
+        x = self.pool(F.relu(self.bn2(self.conv2(x))))
 
         # Global avg pooling
         x = self.avg_pool(x) # [batch_size, 256, 1]
