@@ -11,9 +11,7 @@ class Net(nn.Module):
         self.pool = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, stride=1)
         self.bn2 = nn.BatchNorm1d(num_features=256)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        
         self.avg_pool = nn.AvgPool1d(154)
         self.out = nn.Linear(256, 2)
 
