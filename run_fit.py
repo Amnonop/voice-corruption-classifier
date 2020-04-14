@@ -9,7 +9,7 @@ from data_loader import DataLoader
 from m5 import M5
 from audio_dataset import AudioDataset
 
-CONFIG_FILENAME = 'configs/config.json'
+CONFIG_FILENAME = 'C:\\Users\\ophir\\source\\repos\\voice-corruption-classifier\\config\\config.json'
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
         raise Exception(f'{data_dir} does not exist.')
 
     batch_size = 4
-    epochs = 4
+    epochs = 32
 
     model = M5(num_classes=4)
     classifier = Classifier(model=model, state_path=f'./state_{epochs}_epochs_1.pth')
