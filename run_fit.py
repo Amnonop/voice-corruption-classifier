@@ -9,11 +9,10 @@ from data_loader import DataLoader
 from m5 import M5
 from audio_dataset import AudioDataset
 
-CONFIG_FILENAME = 'configs/config.json'
-
 
 def main():
-    config = Configuration(CONFIG_FILENAME)
+    config_filename = Path.cwd().joinpath('configs/config.json')
+    config = Configuration(config_filename)
 
     csv_path = Path(config.csv_filename)
     if not csv_path.is_file():
