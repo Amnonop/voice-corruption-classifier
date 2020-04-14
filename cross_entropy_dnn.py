@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from AudioDataset import AudioDataset, TrainTestSplitter
 from pathlib import Path
-from nn_modules import Net
+from nn_modules import *
 from matplotlib import pyplot as plt
 
 ###https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py###
@@ -12,19 +12,19 @@ from matplotlib import pyplot as plt
 #transform = transforms.Compose(
  #   [transforms.ToTensor(),
   #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-csv_filepath = Path('data/clean_speech/spkrinfo.csv');
+csv_filepath = Path('C:\\Users\\ophir\\source\\repos\\voice-corruption-classifier\\data\\voice_data\\data\\clean_speach\\spkrinfo.csv')
 train_test_splitter = TrainTestSplitter(csv_file=csv_filepath, test_ratio=0.2)
 
-trainset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=True)
+trainset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='C:\\Users\\ophir\\source\\repos\\voice-corruption-classifier\\data\\voice_data\\data\\clean_speach', is_train=True)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=0)
 
-testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='data/clean_speech', is_train=False)
+testset = AudioDataset(train_test_splitter, csv_file=csv_filepath, root_dir='C:\\Users\\ophir\\source\\repos\\voice-corruption-classifier\\data\\voice_data\\data\\clean_speach', is_train=False)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=0)
 
 classes = ('M', 'F')
 
 #define the nn:
-net = Net()
+net = M5()
 
 
 # define loss function:
@@ -32,7 +32,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 # network training:
-num_epochs = 16
+num_epochs = 1
 train_loss_values = []
 for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -71,7 +71,7 @@ plt.plot(train_loss_values)
 plt.show()
 
 # save net state dict
-PATH = './speech_net.pth'
+PATH = './speech_net_M5.pth'
 torch.save(net.state_dict(), PATH)
 
 # test vs ground truth
@@ -81,7 +81,7 @@ data = dataiter.next()
 test_inputs = data['audio']
 test_labels = data['label']
 
-net = Net()
+net = M5()
 net.load_state_dict(torch.load(PATH))
 
 outputs = net(test_inputs)
