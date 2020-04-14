@@ -7,8 +7,6 @@ from torch.optim import SGD
 import torch
 import pandas as pd
 
-from commons import *
-
 
 class Classifier:
     def __init__(self, model, state_path):
