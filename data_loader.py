@@ -16,7 +16,7 @@ class DataLoader:
 
     def split(self, test_ratio=0.2):
         splitter = StratifiedShuffleSplit(n_splits=1, test_size=test_ratio, random_state=42)
-        for train_index, test_index in splitter.split(self.data_frame, self.data_frame.iloc[:, 1]):
+        for train_index, test_index in splitter.split(self.data, self.data.iloc[:, 1]):
             train_set = self.data.loc[train_index]
             test_set = self.data.loc[test_index]
         return train_set, test_set

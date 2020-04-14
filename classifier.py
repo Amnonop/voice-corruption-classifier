@@ -7,6 +7,8 @@ from torch.optim import SGD
 import torch
 import pandas as pd
 
+from commons import *
+
 
 class Classifier:
     def __init__(self, model, state_path):
@@ -18,7 +20,7 @@ class Classifier:
         running_corrects = 0
 
         for data in data_loader:
-            inputs = data['ecg']
+            inputs = data['signal']
             labels = data['label']
 
             optimizer.zero_grad()
@@ -45,7 +47,7 @@ class Classifier:
         running_corrects = 0
 
         for data in data_loader:
-            inputs = data['ecg']
+            inputs = data['signal']
             labels = data['label']
 
             optimizer.zero_grad()
@@ -80,7 +82,7 @@ class Classifier:
 
         # Train the network
         for epoch in range(epochs):
-            print(f'Epoch {epoch}/{epochs - 1}')
+            print(f'Epoch {epoch + 1}/{epochs}')
             print('-' * 10)
 
             running_loss, running_corrects = self.train(test_set_loader, optimizer, loss_function)
@@ -139,7 +141,7 @@ class Classifier:
         with torch.no_grad():
             for data in data_loader:
                 filenames = data['filename']
-                inputs = data['ecg']
+                inputs = data['sample']
                 targets = data['label']
 
                 outputs = self.model(inputs)

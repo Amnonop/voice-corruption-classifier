@@ -1,12 +1,16 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+
 from configuration import *
-from dataset_transforms import TransformsComposer, ToTensor
+from dataset_transforms import TransformsComposer, ToTensor, Rescale
 from classifier import Classifier
 from data_loader import DataLoader
 from m5 import M5
+from audio_dataset import AudioDataset
 
 CONFIG_FILENAME = 'configs/config.json'
+
 
 def main():
     config = Configuration(CONFIG_FILENAME)
@@ -19,19 +23,19 @@ def main():
         raise Exception(f'{data_dir} does not exist.')
 
     batch_size = 4
-    epochs = 32
+    epochs = 4
 
     model = M5(num_classes=4)
     classifier = Classifier(model=model, state_path=f'./state_{epochs}_epochs_1.pth')
 
-    transform = TransformsComposer([ToTensor()])
+    transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 
     data_loader = DataLoader(csv_path)
 
     # Split to train and test
     train_set, test_set = data_loader.split(test_ratio=0.2)
-    train_dataset = ECGDataset(train_set, data_dir, transform)
-    test_dataset = ECGDataset(test_set, data_dir, transform)
+    train_dataset = AudioDataset(train_set, data_dir, transforms)
+    test_dataset = AudioDataset(test_set, data_dir, transforms)
 
     # Fit model on data
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,
