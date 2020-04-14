@@ -210,3 +210,7 @@ data/
 output/
 
 *.pth
+
+.idea/misc.xml
+
+.idea/voice-corruption-classifier.iml
