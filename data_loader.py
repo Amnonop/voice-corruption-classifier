@@ -10,8 +10,8 @@ from configuration import Configuration
 
 class DataLoader:
     def __init__(self, config: Configuration):
-        self._train_csv_filename = config['train_csv']
-        self._test_csv_filename = config['test_csv']
+        self._train_csv_filename = config.train_csv
+        self._test_csv_filename = config.test_csv
         self._category = config.classify_by
 
     def get_train_set(self) -> Tuple[DataFrame, DataFrame]:
@@ -24,10 +24,10 @@ class DataLoader:
         csv_path = Path(csv_filename)
         data_frame = pd.read_csv(csv_path, header=0)
 
-        filename_column = data_frame.columns.get_loc('Filename')
+        file_column = data_frame.columns.get_loc('File')
         category_column = data_frame.columns.get_loc(self._category)
 
-        x = data_frame.iloc[:, filename_column]
+        x = data_frame.iloc[:, file_column]
         y = data_frame.iloc[:, category_column]
 
         return x, y

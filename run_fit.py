@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import pandas as pd
@@ -5,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 
-from commons import CONFIGS_DIR
+from commons import CONFIGS_DIR, STATES_DIR
 from configuration import *
 from dataset_transforms import TransformsComposer, ToTensor, Rescale
 from classifier import Classifier
@@ -14,6 +15,7 @@ from m5 import M5
 from audio_dataset import AudioDataset
 
 CONFIG_FILENAME = 'config.json'
+
 
 def main():
     config_filename = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
@@ -29,32 +31,34 @@ def main():
     batch_size = 4
     epochs = 32
 
-    model = M5(num_classes=4)
-    classifier = Classifier(model=model, state_path=f'./state_{epochs}_epochs_1.pth')
-
     transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 
-    # Split to train and test
-    # train_set, test_set = data_loader.split(test_ratio=0.2)
-    train_csv_path = Path(config.train_csv)
-    train_set = pd.read_csv(train_csv_path, header=0)
-
-    # Create the classes based on configuration
-    class_column_index = train_set.columns.get_loc(config.classify_by)
-    class_column = train_set.iloc[:, class_column_index]
     encoder = LabelEncoder()
-    classes_encoded = encoder.fit_transform(class_column)
+
+    data_loader = DataLoader(config)
+    x_train, y_train = data_loader.get_train_set()
+    encoder.fit(y_train)
+
     classes = encoder.classes_
     classes_map = {}
     for i, category in enumerate(classes):
         classes_map[category] = i
     print(classes_map)
 
-    train_dataset = AudioDataset(train_set, data_dir, transforms)
+    encoder.transform(y_train)
+    train_dataset = AudioDataset(x_train, y_train, transforms)
 
-    test_csv_path = Path(config.test_csv)
-    test_set = pd.read_csv(test_csv_path, header=0)
-    test_dataset = AudioDataset(test_set, data_dir, transforms)
+    x_test, y_test = data_loader.get_test_set()
+    encoder.transform(y_test)
+    test_dataset = AudioDataset(x_test, y_test, transforms)
+
+    model = M5(num_classes=len(classes_map))
+
+    states_dir = Path.cwd().joinpath(STATES_DIR)
+    state_filename = f'{uuid.uuid1()}_state_{epochs}_epochs.pth'
+    state_path = states_dir.joinpath(state_filename)
+
+    classifier = Classifier(model=model, state_path=state_path)
 
     # Fit model on data
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,

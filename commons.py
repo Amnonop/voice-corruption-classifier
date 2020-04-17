@@ -1,4 +1,5 @@
 CONFIGS_DIR = 'configs/'
+STATES_DIR = 'states/'
 
 class_ids = {'M': 0, 'F': 1}
 
