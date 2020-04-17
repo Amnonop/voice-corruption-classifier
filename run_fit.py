@@ -29,7 +29,7 @@ def main():
         raise Exception(f'{data_dir} does not exist.')
 
     batch_size = 4
-    epochs = 32
+    epochs = 1
 
     transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 
@@ -45,11 +45,11 @@ def main():
         classes_map[category] = i
     print(classes_map)
 
-    encoder.transform(y_train)
+    y_train = encoder.transform(y_train)
     train_dataset = AudioDataset(x_train, y_train, transforms)
 
     x_test, y_test = data_loader.get_test_set()
-    encoder.transform(y_test)
+    y_test = encoder.transform(y_test)
     test_dataset = AudioDataset(x_test, y_test, transforms)
 
     model = M5(num_classes=len(classes_map))
@@ -64,14 +64,21 @@ def main():
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,
                                                           validation_data=test_dataset)
 
-    plt.figure()
-    plt.title(f'Model Loss for {epochs} epochs')
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.plot(train_loss_history, label='train')
-    plt.plot(val_loss_history, label='test')
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.title(f'Model Loss for {epochs} epochs')
+    # plt.xlabel('epoch')
+    # plt.ylabel('loss')
+    # plt.plot(train_loss_history, label='train')
+    # plt.plot(val_loss_history, label='test')
+    # plt.legend()
+    # plt.show()
+    
+    predictions_path = Path.cwd().joinpath('./predicted.csv')
+    validation_dataset = AudioDataset(x_test, y_test, transforms)
+    validation_model = M5(num_classes=len(classes_map))
+    validation_classifier = Classifier(validation_model, state_path=state_path)
+    validation_classifier.predict(validation_dataset, batch_size=batch_size, output_filepath=predictions_path, classes=classes_map)
+
 
 if __name__ == '__main__':
     main()

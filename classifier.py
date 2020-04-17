@@ -1,5 +1,6 @@
 import time
 import copy
+import sys
 
 from torch.utils.data import DataLoader
 from torch.nn import CrossEntropyLoss
@@ -124,7 +125,7 @@ class Classifier:
         data_frame = pd.DataFrame(predictions, columns=['Filename', 'Class', 'Predicted'])
         data_frame.to_csv(filepath)
 
-    def predict(self, test_set, batch_size, output_filepath):
+    def predict(self, test_set, batch_size, output_filepath, classes: dict):
         data_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
         self.model.load_state_dict(torch.load(self.state_path))
         correct = 0.0
@@ -141,7 +142,7 @@ class Classifier:
         with torch.no_grad():
             for data in data_loader:
                 filenames = data['filename']
-                inputs = data['sample']
+                inputs = data['signal']
                 targets = data['label']
 
                 outputs = self.model(inputs)
@@ -169,5 +170,5 @@ class Classifier:
                 100 * correct / total))
 
         for i in range(4):
-            print('Accuracy of %5s : %2d %%' % (
-                get_class_name(i), 100 * class_correct[i] / class_total[i]))
+            print('Accuracy of %5s : %2d %%'.format(
+                classes[i], 100 * class_correct[i] / class_total[i]))

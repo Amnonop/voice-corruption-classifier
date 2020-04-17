@@ -27,7 +27,7 @@ class AudioDataset(Dataset):
         if self.transform:
             signal = self.transform(signal)
 
-        label = self.y.iloc[idx]
+        label = self.y[idx]
 
         sample = {'signal': signal, 'label': label, 'filename': filename}
 
