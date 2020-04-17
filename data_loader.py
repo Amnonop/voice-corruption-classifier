@@ -11,7 +11,7 @@ class DataLoader:
 
     def load_data(self) -> DataFrame:
         csv_path = Path(self._csv_filename)
-        data_frame = pd.read_csv(csv_path)
+        data_frame = pd.read_csv(csv_path, header=0)
         return data_frame
 
     def split(self, test_ratio=0.2):
