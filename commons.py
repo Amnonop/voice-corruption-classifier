@@ -1,3 +1,5 @@
+CONFIGS_DIR = 'configs/'
+
 class_ids = {'M': 0, 'F': 1}
 
 
