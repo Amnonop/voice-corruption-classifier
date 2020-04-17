@@ -80,5 +80,6 @@ def main():
     print(f'Writing testing set to {csv_path}')
     pd.DataFrame(train_set).to_csv(csv_path)
 
+
 if __name__ == '__main__':
     main()
