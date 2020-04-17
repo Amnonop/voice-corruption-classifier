@@ -55,11 +55,17 @@ def main():
     config = load_config(config_path)
 
     dataset_dir = config['dataset_dir']
+
+    print(f'Getting speakers data from {dataset_dir}')
     speakers = get_speakers_data(dataset_dir)
 
     csv_dir = config['csv_path']
     csv_path = Path(csv_dir).joinpath(CSV_FILENAME)
+
+    print(f'Writing speakers data to {csv_path}')
     write_csv_file(csv_path, speakers)
+
+    print('Done')
 
 
 if __name__ == '__main__':
