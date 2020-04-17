@@ -23,7 +23,7 @@ def get_directories(parent_dir: Path) -> list:
 
 
 def get_speakers_data(dataset_dir: str) -> list:
-    dataset_path = Path(dataset_dir)
+    dataset_path = Path.cwd().joinpath(dataset_dir)
     speakers = []
 
     for mode_dir in get_directories(dataset_path):
@@ -44,14 +44,14 @@ def write_csv_file(csv_filename: str, speakers: list):
         for speaker_file in speaker.files:
             rows.append([speaker.id, speaker.sex, speaker.dialect, speaker_file])
 
-    csv_path = Path(csv_filename)
+    csv_path = Path.cwd().joinpath(csv_filename)
     with open(csv_path, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(rows)
 
 
 def main():
-    config_path = Path(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
+    config_path = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
     config = load_config(config_path)
 
     dataset_dir = config['dataset_dir']
