@@ -72,13 +72,13 @@ def main():
 
     print()
     print(f'Writing training set to {csv_path}')
-    pd.DataFrame(train_set).to_csv(csv_path)
+    pd.DataFrame(train_set).to_csv(csv_path, index=False)
 
     test_csv_filename = f'test_by_{split_category.lower()}.csv'
     csv_path = Path(csv_dir).joinpath(test_csv_filename)
 
     print(f'Writing testing set to {csv_path}')
-    pd.DataFrame(train_set).to_csv(csv_path)
+    pd.DataFrame(train_set).to_csv(csv_path, index=False)
 
 
 if __name__ == '__main__':
