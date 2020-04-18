@@ -42,7 +42,7 @@ def main():
     classes = encoder.classes_
     classes_map = {}
     for i, category in enumerate(classes):
-        classes_map[category] = i
+        classes_map[i] = category
     print(classes_map)
 
     y_train = encoder.transform(y_train)

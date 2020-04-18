@@ -139,6 +139,8 @@ class Classifier:
 
         start_time = time.time()
 
+        print('Starting prediction')
+
         with torch.no_grad():
             for data in data_loader:
                 filenames = data['filename']
@@ -169,6 +171,6 @@ class Classifier:
         print('Accuracy of the network on the test set: %d %%' % (
                 100 * correct / total))
 
-        for i in range(4):
-            print('Accuracy of %5s : %2d %%'.format(
+        for i in range(len(classes)):
+            print('Accuracy of {:.5s} : {:.2f} %'.format(
                 classes[i], 100 * class_correct[i] / class_total[i]))
