@@ -21,12 +21,12 @@ def main():
     config_filename = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
     config = Configuration(config_filename)
 
-    csv_path = Path(config.csv_filename)
-    if not csv_path.is_file():
-        raise Exception(f'{csv_path} does not exist.')
-    data_dir = Path(config.data_dir)
-    if not Path(data_dir).is_dir():
-        raise Exception(f'{data_dir} does not exist.')
+    # csv_path = Path(config.csv_filename)
+    # if not csv_path.is_file():
+    #     raise Exception(f'{csv_path} does not exist.')
+    # data_dir = Path(config.data_dir)
+    # if not Path(data_dir).is_dir():
+    #     raise Exception(f'{data_dir} does not exist.')
 
     batch_size = 4
     epochs = 1
@@ -46,11 +46,11 @@ def main():
     print(classes_map)
 
     y_train = encoder.transform(y_train)
-    train_dataset = AudioDataset(x_train, y_train, transforms)
+    train_dataset = AudioDataset(x_train, y_train, classes_map, transforms)
 
     x_test, y_test = data_loader.get_test_set()
     y_test = encoder.transform(y_test)
-    test_dataset = AudioDataset(x_test, y_test, transforms)
+    test_dataset = AudioDataset(x_test, y_test, classes_map ,transforms)
 
     model = M5(num_classes=len(classes_map))
 
