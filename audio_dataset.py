@@ -17,13 +17,12 @@ class AudioDataset(Dataset):
         self.transform = transform
 
     def group_dataset(self, x: DataFrame, y: DataFrame, classes: dict) -> dict:
-        dataset_by_class = []
+        dataset_by_class = {}
         for class_id in classes.keys():
             dataset_by_class[class_id] = []
 
         for i, class_id in enumerate(y):
-            dataset_by_class[class_id] = x[i]
-
+            dataset_by_class[class_id].append(x[i])
         return dataset_by_class
 
     def __len__(self):
