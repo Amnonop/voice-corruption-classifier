@@ -214,3 +214,5 @@ output/
 .idea/misc.xml
 
 .idea/voice-corruption-classifier.iml
+
+predicted.csv
