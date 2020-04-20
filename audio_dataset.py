@@ -33,10 +33,18 @@ class AudioDataset(Dataset):
             index = index.tolist()
 
         if index % 2 == 1:
-            label = 1
+            label = 1.0
             class_index = random.randint(0, len(self.classes) - 1)
-            file1 = self.dataset_by_class[class_index]
-        filename = self.x.iloc[index]
+            file1 = random.choice(self.dataset_by_class[class_index])
+            file2 = randome.choice(self.dataset_by_class[class_index])
+        else:
+            label = 0.0
+            class_index1 = random.randint(0, len(self.classes) - 1)
+            class_index2 = random.randint(0, len(self.classes) - 1)
+            while class_index1 == class_index2:
+                class_index2 = random.randint(0, len(self.classes) - 1)
+            file1 = randome.choice(self.dataset_by_class[class_index1])
+            file2 = randome.choice(self.dataset_by_class[class_index2])
         audio_path = Path(filename)
         signal, sampling_rate = librosa.load(audio_path)
 
