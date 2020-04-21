@@ -26,8 +26,7 @@ class AudioDataset(Dataset):
         return dataset_by_class
 
     def __len__(self):
-  #      return len(self.x)
-        return 2
+       return len(self.x)
 
     def __getitem__(self, index):
         if torch.is_tensor(index):
