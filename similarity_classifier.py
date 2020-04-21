@@ -34,8 +34,8 @@ class SimilarityClassifier:
                 optimizer.step()
 
             # Statistics
-            running_loss += loss.item() * inputs.size(0)
-            running_corrects += torch.sum(preds == labels.data)
+            running_loss += loss.item() * signal1.size(0)
+            running_corrects += torch.sum(preds == label.data)
 
         return running_loss, running_corrects
 

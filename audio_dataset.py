@@ -1,6 +1,6 @@
 import random
 from pathlib import Path
-
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
@@ -57,4 +57,4 @@ class AudioDataset(Dataset):
 
         #sample = {'signal': signal, 'label': label, 'filename': filename}
 
-        return signal1, signal2, label
+        return signal1, signal2, torch.from_numpy(np.array([label], dtype=np.float32))
