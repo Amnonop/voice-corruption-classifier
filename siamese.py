@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 
 class Siamese(nn.Module):
@@ -34,9 +35,11 @@ class Siamese(nn.Module):
         )
 
         self.avg_pool = nn.AvgPool1d(9)
-        self.softmax_layer = nn.Linear(512, num_classes)
+        #self.softmax_layer = nn.Linear(512, num_classes)
 
-        self.out = nn.Linear(512, 1)
+        self.linear = nn.Sequential(nn.Linear(512, 256), nn.Sigmoid())
+
+        self.out = nn.Linear(256, 1)
 
 
     def forward_one(self, x):
@@ -50,7 +53,7 @@ class Siamese(nn.Module):
 
         # Dense
         x = x.view(x.size(0), -1)  # [batch_size, 256*1=256]
-        x = self.softmax_layer(x)  # [batch_size, 10]
+        x = self.linear(x)  # [batch_size, 10]
         return x
 
     def forward(self, x1, x2):

@@ -49,7 +49,7 @@ class AudioDataset(Dataset):
         signal1, sampling_rate1 = librosa.load(audio_path)
         audio_path = Path(file2)
         signal2, sampling_rate2 = librosa.load(audio_path)
-        if self.tranform:
+        if self.transform:
             signal1 = self.transform(signal1)
             signal2 = self.transform(signal2)
 

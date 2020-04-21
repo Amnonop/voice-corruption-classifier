@@ -3,7 +3,7 @@ import copy
 import sys
 
 from torch.utils.data import DataLoader
-from torch.nn import CrossEntropyLoss
+from torch.nn import BCEWithLogitsLoss
 from torch.optim import SGD
 import torch
 import pandas as pd
@@ -45,15 +45,13 @@ class SimilarityClassifier:
         running_loss = 0.0
         running_corrects = 0
 
-        for data in data_loader:
-            inputs = data['signal']
-            labels = data['label']
-
+        for signal1, signal2, label in data_loader:
+            self.model.validate()
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(False):
-                outputs = self.model(inputs)
-                loss = criterion(outputs, labels)
+                outputs = self.model(signal1, signal2)
+                loss = criterion(outputs, label)
 
                 _, preds = torch.max(outputs, 1)
 
@@ -77,7 +75,7 @@ class SimilarityClassifier:
 
         learning_rate = 0.001
         optimizer = SGD(self.model.parameters(), lr=learning_rate, momentum=0.9)
-        loss_function = CrossEntropyLoss()
+        loss_function = BCEWithLogitsLoss(size_average=True)
 
         # Train the network
         for epoch in range(epochs):

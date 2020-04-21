@@ -12,6 +12,7 @@ from dataset_transforms import TransformsComposer, ToTensor, Rescale
 from classifier import Classifier
 from data_loader import DataLoader
 from m5 import M5
+from siamese import Siamese
 from similarity_classifier import SimilarityClassifier
 from audio_dataset import AudioDataset
 
