@@ -46,7 +46,7 @@ class SimilarityClassifier:
         running_corrects = 0
 
         for signal1, signal2, label in data_loader:
-            self.model.validate()
+            self.model.eval()
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(False):
@@ -56,8 +56,8 @@ class SimilarityClassifier:
                 _, preds = torch.max(outputs, 1)
 
             # Statistics
-            running_loss += loss.item() * inputs.size(0)
-            running_corrects += torch.sum(preds == labels.data)
+            running_loss += loss.item() * signal1.size(0)
+            running_corrects += torch.sum(preds == label.data)
 
         return running_loss, running_corrects
 
@@ -138,12 +138,9 @@ class SimilarityClassifier:
         print('Starting prediction')
 
         with torch.no_grad():
-            for data in data_loader:
-                filenames = data['filename']
-                inputs = data['signal']
-                targets = data['label']
+            for signal1, signal2, targets in data_loader:
 
-                outputs = self.model(inputs)
+                outputs = self.model(signal1, signal2)
                 _, predicted = torch.max(outputs.data, 1)
 
                 c = (predicted == targets).squeeze()

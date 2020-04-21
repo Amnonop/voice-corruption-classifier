@@ -77,10 +77,10 @@ def main():
     # plt.show()
     
     predictions_path = Path.cwd().joinpath('./predicted.csv')
-    validation_dataset = AudioDataset(x_test, y_test, transforms)
+    validation_dataset = AudioDataset(x_test, y_test, classes_map, transforms)
     validation_model = Siamese(num_classes=len(classes_map))
     validation_classifier = SimilarityClassifier(validation_model, state_path=state_path)
-    validation_classifier.predict(validation_dataset, batch_size=batch_size, output_filepath=predictions_path, classes=classes_map)
+    #validation_classifier.predict(validation_dataset, batch_size=batch_size, output_filepath=predictions_path, classes=classes_map)
 
 
 if __name__ == '__main__':
