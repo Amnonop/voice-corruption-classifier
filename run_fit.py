@@ -12,6 +12,7 @@ from dataset_transforms import TransformsComposer, ToTensor, Rescale
 from classifier import Classifier
 from data_loader import DataLoader
 from m5 import M5
+from similarity_classifier import SimilarityClassifier
 from audio_dataset import AudioDataset
 
 CONFIG_FILENAME = 'config.json'
@@ -52,13 +53,14 @@ def main():
     y_test = encoder.transform(y_test)
     test_dataset = AudioDataset(x_test, y_test, classes_map ,transforms)
 
-    model = M5(num_classes=len(classes_map))
+    model = Siamese(num_classes=len(classes_map))
 
     states_dir = Path.cwd().joinpath(STATES_DIR)
     state_filename = f'{uuid.uuid1()}_state_{epochs}_epochs.pth'
     state_path = states_dir.joinpath(state_filename)
 
-    classifier = Classifier(model=model, state_path=state_path)
+    classifier = SimilarityClassifier(model=model, state_path=state_path)
+
 
     # Fit model on data
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,
@@ -75,8 +77,8 @@ def main():
     
     predictions_path = Path.cwd().joinpath('./predicted.csv')
     validation_dataset = AudioDataset(x_test, y_test, transforms)
-    validation_model = M5(num_classes=len(classes_map))
-    validation_classifier = Classifier(validation_model, state_path=state_path)
+    validation_model = Siamese(num_classes=len(classes_map))
+    validation_classifier = SimilarityClassifier(validation_model, state_path=state_path)
     validation_classifier.predict(validation_dataset, batch_size=batch_size, output_filepath=predictions_path, classes=classes_map)
 
 

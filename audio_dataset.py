@@ -36,23 +36,25 @@ class AudioDataset(Dataset):
             label = 1.0
             class_index = random.randint(0, len(self.classes) - 1)
             file1 = random.choice(self.dataset_by_class[class_index])
-            file2 = randome.choice(self.dataset_by_class[class_index])
+            file2 = random.choice(self.dataset_by_class[class_index])
         else:
             label = 0.0
             class_index1 = random.randint(0, len(self.classes) - 1)
             class_index2 = random.randint(0, len(self.classes) - 1)
             while class_index1 == class_index2:
                 class_index2 = random.randint(0, len(self.classes) - 1)
-            file1 = randome.choice(self.dataset_by_class[class_index1])
-            file2 = randome.choice(self.dataset_by_class[class_index2])
-        audio_path = Path(filename)
-        signal, sampling_rate = librosa.load(audio_path)
+            file1 = random.choice(self.dataset_by_class[class_index1])
+            file2 = random.choice(self.dataset_by_class[class_index2])
+        audio_path = Path(file1)
+        signal1, sampling_rate1 = librosa.load(audio_path)
+        audio_path = Path(file2)
+        signal2, sampling_rate2 = librosa.load(audio_path)
+        if self.tranform:
+            signal1 = self.transform(signal1)
+            signal2 = self.transform(signal2)
 
-        if self.transform:
-            signal = self.transform(signal)
+        #label = self.y[idx]
 
-        label = self.y[idx]
+        #sample = {'signal': signal, 'label': label, 'filename': filename}
 
-        sample = {'signal': signal, 'label': label, 'filename': filename}
-
-        return sample
+        return signal1, signal2, label
