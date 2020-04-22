@@ -21,12 +21,12 @@ class SimilarityClassifier:
         running_corrects = 0
 
         for first_sample, second_sample, label in data_loader:
-            batch_size = first_sample.size(0)
+            batch_size = label.size(0)
             optimizer.zero_grad()
             self.model.train()
 
             with torch.set_grad_enabled(True):
-                outputs = self.model(first_sample.signal, second_sample.signal)
+                outputs = self.model(first_sample['signal'], second_sample['signal'])
                 loss = criterion(outputs, label)
 
                 _, preds = torch.max(outputs, 1)
@@ -47,12 +47,12 @@ class SimilarityClassifier:
         running_corrects = 0
 
         for first_sample, second_sample, label in data_loader:
-            batch_size = first_sample.size(0)
+            batch_size = label.size(0)
             self.model.eval()
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(False):
-                outputs = self.model(first_sample.signal, second_sample.signal)
+                outputs = self.model(first_sample['signal'], second_sample['signal'])
                 loss = criterion(outputs, label)
 
                 _, preds = torch.max(outputs, 1)
@@ -120,16 +120,20 @@ class SimilarityClassifier:
         return train_loss_history, val_loss_history
 
     def save_predictions(self, predictions, filepath):
-        data_frame = pd.DataFrame(predictions, columns=['Filename', 'Class', 'Predicted'])
-        data_frame.to_csv(filepath)
+        data_frame = pd.DataFrame(predictions, columns=['filename 1', 'filename 2', 'label', 'predicted'])
+        data_frame.to_csv(filepath, index=False)
 
-    def predict(self, test_set, batch_size, output_filepath, classes: dict):
+    def predict(self, test_set, batch_size, output_filepath):
         data_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
         self.model.load_state_dict(torch.load(self.state_path))
         correct = 0.0
         total = 0.0
 
-        num_classes = len(class_ids.keys())
+        classes = {
+            0: 'different',
+            1: 'same'}
+
+        num_classes = len(classes.keys())
         class_correct = list(0. for i in range(num_classes))
         class_total = list(0. for i in range(num_classes))
 
@@ -142,17 +146,18 @@ class SimilarityClassifier:
         with torch.no_grad():
             for first_sample, second_sample, targets in data_loader:
 
-                outputs = self.model(first_sample.signal, second_sample.signal)
+                outputs = self.model(first_sample['signal'], second_sample['signal'])
                 _, predicted = torch.max(outputs.data, 1)
 
                 c = (predicted == targets).squeeze()
                 for i in range(len(targets)):
-                    label = targets[i]
-                    class_correct[label] += c[i].item()
-                    class_total[label] += 1
+                    class_id = int(targets[i].item())
+                    if predicted[i] == class_id:
+                        class_correct[class_id] += 1
+                    class_total[class_id] += 1
 
-                    # Save prediction in format of file, label, predicted
-                    predictions.append((filenames[i], get_class_name(label), get_class_name(predicted[i])))
+                    # Save prediction in format of file_1, file_2, label, predicted
+                    predictions.append((first_sample['filename'][i], second_sample['filename'][i], class_id, predicted[i].item()))
 
                 total += targets.size(0)
                 correct += (predicted == targets).sum().item()
@@ -164,8 +169,8 @@ class SimilarityClassifier:
         self.save_predictions(predictions, output_filepath)
 
         print('Accuracy of the network on the test set: %d %%' % (
-                100 * correct / total))
+                100 * sum(class_correct) / total))
 
         for i in range(len(classes)):
-            print('Accuracy of {:.5s} : {:.2f} %'.format(
+            print('Accuracy of {:.9s} : {:.2f} %'.format(
                 classes[i], 100 * class_correct[i] / class_total[i]))

@@ -4,17 +4,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.utils.data import Dataset
 import pandas as pd
 from pandas import DataFrame
 import librosa
-
-
-class AudioSample:
-    def __init__(self, signal: array, filename: str, label: str):
-        self.signal = signal
-        self.filename = filename
-        self.label = label
 
 
 class AudioDataset(Dataset):
@@ -35,7 +29,8 @@ class AudioDataset(Dataset):
         return dataset_by_class
 
     def __len__(self):
-        return len(self.x)
+        # return len(self.x)
+        return 4
 
     def get_second_class(self, class_index: int) -> int:
         second_class_index = random.randint(0, len(self.classes) - 1)
@@ -43,7 +38,7 @@ class AudioDataset(Dataset):
             second_class_index = random.randint(0, len(self.classes) - 1)
         return second_class_index
     
-    def load_random_sample(self, class_id: int) -> AudioSample:
+    def load_random_sample(self, class_id: int) -> dict:
         filename = random.choice(self.dataset_by_class[class_id])
         sample_path = Path(filename)
         signal, sampling_rate = librosa.load(sample_path)
@@ -51,9 +46,13 @@ class AudioDataset(Dataset):
         if self.transform:
             signal = self.transform(signal)
 
-        return AudioSample(signal, filename, self.classes[class_id])
+        return {
+            'signal': signal,
+            'filename': filename,
+            'label': self.classes[class_id]
+            }
 
-    def get_sample_pair(self, same_class: bool) -> Tuple[AudioSample, AudioSample]:
+    def get_sample_pair(self, same_class: bool) -> Tuple[dict, dict]:
         class_id = random.randint(0, len(self.classes) - 1)
         first_sample = self.load_random_sample(class_id)
 
@@ -70,10 +69,10 @@ class AudioDataset(Dataset):
             index = index.tolist()
 
         if index % 2 == 1:
-            label = 1.0
+            label = 1
             first_sample, second_sample = self.get_sample_pair(same_class=True)
         else:
-            label = 0.0
+            label = 0
             first_sample, second_sample = self.get_sample_pair(same_class=False)
 
         return first_sample, second_sample, torch.from_numpy(np.array([label], dtype=np.float32))
