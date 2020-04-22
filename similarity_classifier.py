@@ -20,12 +20,13 @@ class SimilarityClassifier:
         running_loss = 0.0
         running_corrects = 0
 
-        for signal1, signal2, label in data_loader:
+        for first_sample, second_sample, label in data_loader:
+            batch_size = first_sample.size(0)
             optimizer.zero_grad()
             self.model.train()
 
             with torch.set_grad_enabled(True):
-                outputs = self.model(signal1, signal2)
+                outputs = self.model(first_sample.signal, second_sample.signal)
                 loss = criterion(outputs, label)
 
                 _, preds = torch.max(outputs, 1)
@@ -34,7 +35,7 @@ class SimilarityClassifier:
                 optimizer.step()
 
             # Statistics
-            running_loss += loss.item() * signal1.size(0)
+            running_loss += loss.item() * batch_size
             running_corrects += torch.sum(preds == label.data)
 
         return running_loss, running_corrects
@@ -45,24 +46,25 @@ class SimilarityClassifier:
         running_loss = 0.0
         running_corrects = 0
 
-        for signal1, signal2, label in data_loader:
+        for first_sample, second_sample, label in data_loader:
+            batch_size = first_sample.size(0)
             self.model.eval()
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(False):
-                outputs = self.model(signal1, signal2)
+                outputs = self.model(first_sample.signal, second_sample.signal)
                 loss = criterion(outputs, label)
 
                 _, preds = torch.max(outputs, 1)
 
             # Statistics
-            running_loss += loss.item() * signal1.size(0)
+            running_loss += loss.item() * batch_size
             running_corrects += torch.sum(preds == label.data)
 
         return running_loss, running_corrects
 
     def fit(self, train_set, batch_size, epochs, validation_data, verbose=False, shuffle=True):
-        test_set_loader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
+        train_data_loader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
 
         since = time.time()
 
@@ -82,19 +84,19 @@ class SimilarityClassifier:
             print(f'Epoch {epoch + 1}/{epochs}')
             print('-' * 10)
 
-            running_loss, running_corrects = self.train(test_set_loader, optimizer, loss_function)
+            train_loss, train_corrects = self.train(train_data_loader, optimizer, loss_function)
 
-            epoch_loss = running_loss / len(test_set_loader.dataset)
-            epoch_acc = running_corrects.double() / len(test_set_loader.dataset)
+            epoch_loss = train_loss / len(train_data_loader.dataset)
+            epoch_acc = train_corrects.double() / len(train_data_loader.dataset)
 
             train_loss_history.append(epoch_loss)
 
             print(f'Train Loss: {epoch_loss} Acc: {epoch_acc}')
 
-            running_loss, running_corrects = self.validate(validation_data, batch_size, optimizer, loss_function)
+            validation_loss, validation_corrects = self.validate(validation_data, batch_size, optimizer, loss_function)
 
-            epoch_loss = running_loss / len(test_set_loader.dataset)
-            epoch_acc = running_corrects.double() / len(test_set_loader.dataset)
+            epoch_loss = validation_loss / len(validation_data)
+            epoch_acc = validation_corrects.double() / len(validation_data)
 
             print(f'Validation Loss: {epoch_loss} Acc: {epoch_acc}')
 
@@ -138,9 +140,9 @@ class SimilarityClassifier:
         print('Starting prediction')
 
         with torch.no_grad():
-            for signal1, signal2, targets in data_loader:
+            for first_sample, second_sample, targets in data_loader:
 
-                outputs = self.model(signal1, signal2)
+                outputs = self.model(first_sample.signal, second_sample.signal)
                 _, predicted = torch.max(outputs.data, 1)
 
                 c = (predicted == targets).squeeze()

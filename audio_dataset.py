@@ -1,11 +1,20 @@
 import random
+from typing import Tuple
 from pathlib import Path
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
 from pandas import DataFrame
 import librosa
+
+
+class AudioSample:
+    def __init__(self, signal: array, filename: str, label: str):
+        self.signal = signal
+        self.filename = filename
+        self.label = label
 
 
 class AudioDataset(Dataset):
@@ -26,7 +35,35 @@ class AudioDataset(Dataset):
         return dataset_by_class
 
     def __len__(self):
-       return len(self.x)
+        return len(self.x)
+
+    def get_second_class(self, class_index: int) -> int:
+        second_class_index = random.randint(0, len(self.classes) - 1)
+        while class_index == second_class_index:
+            second_class_index = random.randint(0, len(self.classes) - 1)
+        return second_class_index
+    
+    def load_random_sample(self, class_id: int) -> AudioSample:
+        filename = random.choice(self.dataset_by_class[class_id])
+        sample_path = Path(filename)
+        signal, sampling_rate = librosa.load(sample_path)
+
+        if self.transform:
+            signal = self.transform(signal)
+
+        return AudioSample(signal, filename, self.classes[class_id])
+
+    def get_sample_pair(self, same_class: bool) -> Tuple[AudioSample, AudioSample]:
+        class_id = random.randint(0, len(self.classes) - 1)
+        first_sample = self.load_random_sample(class_id)
+
+        if same_class:
+            second_sample = self.load_random_sample(class_id)
+        else:
+            second_class_id = self.get_second_class(class_id)
+            second_sample = self.load_random_sample(second_class_id)
+
+        return first_sample, second_sample
 
     def __getitem__(self, index):
         if torch.is_tensor(index):
@@ -34,27 +71,9 @@ class AudioDataset(Dataset):
 
         if index % 2 == 1:
             label = 1.0
-            class_index = random.randint(0, len(self.classes) - 1)
-            file1 = random.choice(self.dataset_by_class[class_index])
-            file2 = random.choice(self.dataset_by_class[class_index])
+            first_sample, second_sample = self.get_sample_pair(same_class=True)
         else:
             label = 0.0
-            class_index1 = random.randint(0, len(self.classes) - 1)
-            class_index2 = random.randint(0, len(self.classes) - 1)
-            while class_index1 == class_index2:
-                class_index2 = random.randint(0, len(self.classes) - 1)
-            file1 = random.choice(self.dataset_by_class[class_index1])
-            file2 = random.choice(self.dataset_by_class[class_index2])
-        audio_path = Path(file1)
-        signal1, sampling_rate1 = librosa.load(audio_path)
-        audio_path = Path(file2)
-        signal2, sampling_rate2 = librosa.load(audio_path)
-        if self.transform:
-            signal1 = self.transform(signal1)
-            signal2 = self.transform(signal2)
+            first_sample, second_sample = self.get_sample_pair(same_class=False)
 
-        #label = self.y[idx]
-
-        #sample = {'signal': signal, 'label': label, 'filename': filename}
-
-        return signal1, signal2, torch.from_numpy(np.array([label], dtype=np.float32))
+        return first_sample, second_sample, torch.from_numpy(np.array([label], dtype=np.float32))
