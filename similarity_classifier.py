@@ -1,6 +1,7 @@
 import time
 import copy
 import sys
+from typing import Tuple
 
 from torch.utils.data import DataLoader
 from torch.nn import BCEWithLogitsLoss
@@ -16,52 +17,63 @@ class SimilarityClassifier:
         self.model = model
         self.state_path = state_path
 
-    def train(self, data_loader, optimizer, criterion):
-        running_loss = 0.0
-        running_corrects = 0
+    def train(self, data_loader, optimizer, criterion) -> Tuple[float, float]:
+        train_loss = 0.0
+        correct_count = 0
+        total = 0
 
         for first_sample, second_sample, label in data_loader:
             batch_size = label.size(0)
-            optimizer.zero_grad()
+
+            # switch model to training mode
             self.model.train()
 
-            with torch.set_grad_enabled(True):
-                outputs = self.model(first_sample['signal'], second_sample['signal'])
-                loss = criterion(outputs, label)
-
-                _, preds = torch.max(outputs, 1)
-
-                loss.backward()
-                optimizer.step()
-
-            # Statistics
-            running_loss += loss.item() * batch_size
-            running_corrects += torch.sum(preds == label.data)
-
-        return running_loss, running_corrects
-
-    def validate(self, validation_data, batch_size, optimizer, criterion):
-        data_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=False)
-
-        running_loss = 0.0
-        running_corrects = 0
-
-        for first_sample, second_sample, label in data_loader:
-            batch_size = label.size(0)
-            self.model.eval()
+            # clear gradient accumulators
             optimizer.zero_grad()
 
-            with torch.set_grad_enabled(False):
-                outputs = self.model(first_sample['signal'], second_sample['signal'])
-                loss = criterion(outputs, label)
+            # forward pass
+            output = self.model(first_sample['signal'], second_sample['signal'])
 
-                _, preds = torch.max(outputs, 1)
+            # calculate loss of the network output with respect to the training labels
+            loss = criterion(output, label)
+
+            # backpropagate and update optimizer learning rate
+            loss.backward()
+            optimizer.step()
 
             # Statistics
-            running_loss += loss.item() * batch_size
-            running_corrects += torch.sum(preds == label.data)
+            correct_count += (torch.max(output, 1)[1].view(label.size()) == label).sum().item()
+            train_loss += (loss.item() / batch_size)
+            total += batch_size
 
-        return running_loss, running_corrects
+        train_accuracy = 100. * correct_count / total
+        return train_loss, train_accuracy
+
+    def validate(self, validation_data, batch_size, optimizer, criterion) -> Tuple[float, float]:
+        data_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=False)
+
+        validation_loss = 0.0
+        correct_count = 0
+        total = 0
+
+        # switch model to evaluation mode
+        self.model.eval()
+
+        with torch.no_grad():
+            for first_sample, second_sample, label in data_loader:
+                batch_size = label.size(0)
+
+                output = self.model(first_sample['signal'], second_sample['signal'])
+
+                loss = criterion(output, label)
+
+                # Statistics
+                correct_count += (torch.max(output, 1)[1].view(label.size()) == label).sum().item()
+                validation_loss += (loss.item() / batch_size)
+                total += batch_size
+
+        validation_accuracy = 100. * correct_count / total
+        return validation_loss, validation_accuracy
 
     def fit(self, train_set, batch_size, epochs, validation_data, verbose=False, shuffle=True):
         train_data_loader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
@@ -84,28 +96,30 @@ class SimilarityClassifier:
             print(f'Epoch {epoch + 1}/{epochs}')
             print('-' * 10)
 
-            train_loss, train_corrects = self.train(train_data_loader, optimizer, loss_function)
+            train_loss, train_accuracy = self.train(train_data_loader, optimizer, loss_function)
 
-            epoch_loss = train_loss / len(train_data_loader.dataset)
-            epoch_acc = train_corrects.double() / len(train_data_loader.dataset)
+            #epoch_loss = train_loss / len(train_data_loader.dataset)
+            #epoch_acc = train_accuracy.double() / len(train_data_loader.dataset)
 
-            train_loss_history.append(epoch_loss)
+            train_loss_history.append(train_loss)
 
-            print(f'Train Loss: {epoch_loss} Acc: {epoch_acc}')
+            print('Train Loss: {:.5f} Acc: {:.3f}'.format(train_loss, train_accuracy))
 
-            validation_loss, validation_corrects = self.validate(validation_data, batch_size, optimizer, loss_function)
+            validation_loss, validation_accuracy = self.validate(validation_data, batch_size, optimizer, loss_function)
 
-            epoch_loss = validation_loss / len(validation_data)
-            epoch_acc = validation_corrects.double() / len(validation_data)
+            #epoch_loss = validation_loss / len(validation_data)
+            #epoch_acc = validation_accuracy.double() / len(validation_data)
 
-            print(f'Validation Loss: {epoch_loss} Acc: {epoch_acc}')
+            print('Validation Loss: {:.5f} Acc: {:.3f}'.format(validation_loss, validation_accuracy))
 
-            if epoch_acc > best_acc:
-                best_acc = epoch_acc
+            # update best weights
+            # TODO: save a snapshot at this point
+            if validation_accuracy > best_acc:
+                best_acc = validation_accuracy
                 best_model_wts = copy.deepcopy(self.model.state_dict())
 
-            val_acc_history.append(epoch_acc)
-            val_loss_history.append(epoch_loss)
+            val_acc_history.append(validation_accuracy)
+            val_loss_history.append(validation_loss)
 
             print()
 
@@ -145,11 +159,9 @@ class SimilarityClassifier:
 
         with torch.no_grad():
             for first_sample, second_sample, targets in data_loader:
-
                 outputs = self.model(first_sample['signal'], second_sample['signal'])
-                _, predicted = torch.max(outputs.data, 1)
+                predicted = torch.max(outputs.data, 1)[1]
 
-                c = (predicted == targets).squeeze()
                 for i in range(len(targets)):
                     class_id = int(targets[i].item())
                     if predicted[i] == class_id:
@@ -168,8 +180,7 @@ class SimilarityClassifier:
         # Save predictions
         self.save_predictions(predictions, output_filepath)
 
-        print('Accuracy of the network on the test set: %d %%' % (
-                100 * sum(class_correct) / total))
+        print('Accuracy of the network on the test set: {:.2f} %'.format(100. * sum(class_correct) / total))
 
         for i in range(len(classes)):
             print('Accuracy of {:.9s} : {:.2f} %'.format(

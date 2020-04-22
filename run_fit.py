@@ -31,7 +31,7 @@ def main():
     #     raise Exception(f'{data_dir} does not exist.')
 
     batch_size = 4
-    epochs = 1
+    epochs = 4
 
     transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 

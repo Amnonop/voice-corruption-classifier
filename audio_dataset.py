@@ -29,8 +29,8 @@ class AudioDataset(Dataset):
         return dataset_by_class
 
     def __len__(self):
+        return 8
         # return len(self.x)
-        return 4
 
     def get_second_class(self, class_index: int) -> int:
         second_class_index = random.randint(0, len(self.classes) - 1)
