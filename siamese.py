@@ -39,7 +39,7 @@ class Siamese(nn.Module):
 
         self.linear = nn.Sequential(nn.Linear(512, 256), nn.Sigmoid())
 
-        self.out = nn.Linear(256, 1)
+        self.out = nn.Sequential(nn.Linear(256, 1), nn.Sigmoid())
 
 
     def forward_one(self, x):

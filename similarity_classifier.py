@@ -22,6 +22,9 @@ class SimilarityClassifier:
         correct_count = 0
         total = 0
 
+        total_different = 0
+        total_same = 0
+
         for first_sample, second_sample, label in data_loader:
             batch_size = label.size(0)
 
@@ -40,12 +43,17 @@ class SimilarityClassifier:
             # backpropagate and update optimizer learning rate
             loss.backward()
             optimizer.step()
-
+            # 
             # Statistics
-            correct_count += (torch.max(output, 1)[1].view(label.size()) == label).sum().item()
+            correct_count += ((output < 0.5) == label).sum().item()
             train_loss += (loss.item() / batch_size)
             total += batch_size
 
+            total_different += (label == 0).sum().item()
+            total_same += (label == 1).sum().item()
+
+
+        print(f'Total different: {total_different}, same: {total_same}')
         train_accuracy = 100. * correct_count / total
         return train_loss, train_accuracy
 
@@ -68,7 +76,7 @@ class SimilarityClassifier:
                 loss = criterion(output, label)
 
                 # Statistics
-                correct_count += (torch.max(output, 1)[1].view(label.size()) == label).sum().item()
+                correct_count += ((output < 0.5) == label).sum().item()#(torch.max(output, 1)[1].view(label.size()) == label).sum().item()
                 validation_loss += (loss.item() / batch_size)
                 total += batch_size
 
@@ -160,7 +168,7 @@ class SimilarityClassifier:
         with torch.no_grad():
             for first_sample, second_sample, targets in data_loader:
                 outputs = self.model(first_sample['signal'], second_sample['signal'])
-                predicted = torch.max(outputs.data, 1)[1]
+                predicted = (outputs < 0.5)#torch.max(outputs.data, 1)[1]
 
                 for i in range(len(targets)):
                     class_id = int(targets[i].item())
