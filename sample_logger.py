@@ -1,4 +1,6 @@
+import json
 from typing import Dict
+from pathlib import Path
 
 
 class DatasetItem:
@@ -37,7 +39,8 @@ class LabelStatistics:
 
 
 class SampleLogger:
-    def __init__(self):
+    def __init__(self, dump_file: str):
+        self._dump_file = dump_file
         self._sample_pairs = []
         self._same_label_count = 0
         self._total_count = 0
@@ -59,3 +62,11 @@ class SampleLogger:
             label_to_samples_map[first_item_label].add_sample(sample_pair.first_sample)
 
         return label_to_samples_map
+
+    def save(self):
+        dump_filepath = Path(self._dump_file)
+        try:
+            with open(dump_filepath, 'w') as out_file:
+                json.dump(self.get_statistics(), out_file)
+        except Exception as exception:
+            print(f'An error occured while trying to write samples to file.', exception)
