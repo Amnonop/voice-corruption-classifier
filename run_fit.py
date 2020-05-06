@@ -15,9 +15,11 @@ from m5 import M5
 from siamese import Siamese
 from similarity_classifier import SimilarityClassifier
 from audio_dataset import AudioDataset
+from utils import create_results_directories
 
 CONFIG_FILENAME = 'config.json'
-
+RESULTS_DIR = 'results/'
+SAMPLE_LOGGER_FILE = 'samples.json'
 
 def main():
     config_filename = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
@@ -32,6 +34,10 @@ def main():
 
     batch_size = 4
     epochs = 4
+
+    results_dir_path = Path.cwd().joinpath(RESULTS_DIR)
+    create_results_directories(results_dir_path)
+    # sample_logger_path = Path.cwd().joinpath()
 
     transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 
