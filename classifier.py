@@ -131,7 +131,7 @@ class Classifier:
         correct = 0.0
         total = 0.0
 
-        num_classes = len(class_ids.keys())
+        num_classes = len(classes.keys())
         class_correct = list(0. for i in range(num_classes))
         class_total = list(0. for i in range(num_classes))
 
@@ -157,7 +157,7 @@ class Classifier:
                     class_total[label] += 1
 
                     # Save prediction in format of file, label, predicted
-                    predictions.append((filenames[i], get_class_name(label), get_class_name(predicted[i])))
+                    predictions.append((filenames[i], classes[label.item()], classes[predicted[i].item()]))
 
                 total += targets.size(0)
                 correct += (predicted == targets).sum().item()
