@@ -13,7 +13,7 @@ import librosa
 from sample_logger import SampleLogger, DatasetItem
 
 
-class SimilarityDataset(Dataset):
+class AudioDataset(Dataset):
     def __init__(self, x: DataFrame, y: DataFrame, classes: dict, sample_logger: SampleLogger, transform=None):
         self.x = x
         self.y = y

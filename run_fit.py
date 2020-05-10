@@ -16,6 +16,7 @@ from siamese import Siamese
 from similarity_classifier import SimilarityClassifier
 from audio_dataset import AudioDataset
 from utils import create_results_directories
+from sample_logger import SampleLogger
 
 CONFIG_FILENAME = 'config.json'
 RESULTS_DIR = 'results/'
@@ -36,8 +37,10 @@ def main():
     epochs = 4
 
     results_dir_path = Path.cwd().joinpath(RESULTS_DIR)
-    create_results_directories(results_dir_path)
-    # sample_logger_path = Path.cwd().joinpath()
+    current_run_path = create_results_directories(results_dir_path)
+
+    sample_logger_path = Path.cwd().joinpath(current_run_path).joinpath(SAMPLE_LOGGER_FILE)
+    sample_logger = SampleLogger(sample_logger_path)
 
     transforms = TransformsComposer([Rescale(output_size=10000), ToTensor()])
 
@@ -54,11 +57,11 @@ def main():
     print(classes_map)
 
     y_train = encoder.transform(y_train)
-    train_dataset = AudioDataset(x_train, y_train, classes_map, transforms)
+    train_dataset = AudioDataset(x_train, y_train, classes_map, sample_logger, transforms)
 
     x_test, y_test = data_loader.get_test_set()
     y_test = encoder.transform(y_test)
-    test_dataset = AudioDataset(x_test, y_test, classes_map ,transforms)
+    test_dataset = AudioDataset(x_test, y_test, classes_map, sample_logger,transforms)
 
     model = Siamese(num_classes=len(classes_map))
 
@@ -68,10 +71,11 @@ def main():
 
     classifier = SimilarityClassifier(model=model, state_path=state_path)
 
-
     # Fit model on data
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,
                                                           validation_data=test_dataset)
+
+    sample_logger.save()
 
     # plt.figure()
     # plt.title(f'Model Loss for {epochs} epochs')
@@ -83,7 +87,7 @@ def main():
     # plt.show()
     
     predictions_path = Path.cwd().joinpath('./predicted.csv')
-    validation_dataset = AudioDataset(x_test, y_test, classes_map, transforms)
+    validation_dataset = AudioDataset(x_test, y_test, classes_map, sample_logger, transforms)
     validation_model = Siamese(num_classes=len(classes_map))
     validation_classifier = SimilarityClassifier(validation_model, state_path=state_path)
     validation_classifier.predict(validation_dataset, batch_size=batch_size, output_filepath=predictions_path)
