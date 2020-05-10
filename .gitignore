@@ -3,6 +3,7 @@
 # Ignore local configurations
 configs/
 results/
+siamese_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

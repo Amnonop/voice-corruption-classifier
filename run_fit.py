@@ -54,7 +54,7 @@ def main():
 
     states_dir = Path.cwd().joinpath(STATES_DIR)
     state_filename = f'{uuid.uuid1()}_state_{epochs}_epochs.pth'
-    state_path = states_dir.joinpath(state_filename)
+    state_path = current_run_path.joinpath('best_snapshot').joinpath(state_filename)
 
     classifier = Classifier(model=model, state_path=state_path)
 
