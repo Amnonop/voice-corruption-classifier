@@ -1,6 +1,8 @@
 from pathlib import Path
+import time
 
-from sklearn.preprocessing import LabelEncoder
+from torch.optim import Adam
+from torch.nn.functional import pairwise_distance
 
 from commons import *
 from configuration import Configuration
@@ -8,6 +10,7 @@ from utils import create_results_directories
 from dataset_transforms import TransformsComposer, ToTensor, Rescale
 from siamese_loader import SiameseLoader
 from siamese import Siamese
+from contrastive_loss import ContrastiveLoss
 
 DATA_DIR = './data'
 
@@ -22,8 +25,6 @@ def main():
 
     transforms = TransformsComposer([Rescale(output_size=SAMPLE_SIZE), ToTensor()])
 
-    encoder = LabelEncoder()
-
     # Load data
     data_loader = SiameseLoader(data_dir_path, transforms)
 
@@ -31,6 +32,79 @@ def main():
     one_shot = data_loader.make_oneshot_task(20)
 
     model = Siamese()
+    criterion = ContrastiveLoss()
+    optimizer = Adam(model.parameters(), lr=0.0005)
+
+    evaluate_every = 10  # interval for evaluating on one-shot tasks
+    loss_every = 20  # interval for printing loss (iterations)
+    batch_size = 32
+    num_iterations = 20000
+    N_way = 20  # how many classes for testing one-shot tasks>
+    n_val = 250  # how many one-shot tasks to validate on?
+    best = -1
+
+    loss_history = []
+    loss_iterations = []
+
+    print("Starting training process!")
+    print("-------------------------------------")
+    t_start = time.time()
+    for i in range(1, num_iterations):
+        (inputs, targets) = data_loader.get_batch(batch_size)
+
+        # switch model to training mode
+        self.model.train()
+
+        # clear gradient accumulators
+        optimizer.zero_grad()
+
+        # forward pass
+        out1, out2 = model(inputs[0], inputs[1])
+
+        # calculate loss of the network output with respect to the training labels
+        loss = criterion(out1, out2, targets)
+
+        # backpropagate and update optimizer learning rate
+        loss.backward()
+        optimizer.step()
+
+        print("\n ------------- \n")
+        print("Loss: {0}".format(loss))
+
+        if i % evaluate_every == 0:
+            print("Time for {0} iterations: {1}".format(i, time.time() - t_start))
+            val_acc = loader.test_oneshot(model, N_way, n_val, verbose=True)
+            if val_acc >= best:
+                print("Current best: {0}, previous best: {1}".format(val_acc, best))
+                # print("Saving weights to: {0} \n".format(weights_path))
+                # model.save_weights(weights_path_2)
+                best = val_acc
+
+        if i % loss_every == 0:
+            print("iteration {}, training loss: {:.2f},".format(i, loss.data[0]))
+            loss_iterations.append(i)
+            loss_history.append(loss.data[0])
+
+    weights_path_2 = os.path.join(data_path, "model_weights.h5")
+    model.load_weights(weights_path_2)
+
+def test_oneshot(model, data_loader, N, k):
+    number_correct = 0
+
+    print(f'Evaluating model on {k} random {N} way one-shot learning tasks.')
+
+    for i in range(k):
+        inputs, targets = data_loader.make_oneshot_task(N, s)
+        output1, output2 = model(inputs[0], inputs[1])
+
+        euclidean_distance = pairwise_distance(output1, output2)
+
+        predictions = euclidean_distance < 1.0
+        number_correct += (predictions == targets).sum().item()
+
+    percent_correct = (100.0 * number_correct / k)
+    print(f'Got an average of {percent_correct}% {N} way one-shot learning accuracy')
+    return percent_correct
 
 
 if __name__ == '__main__':

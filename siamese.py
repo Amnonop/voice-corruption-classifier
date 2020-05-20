@@ -62,7 +62,8 @@ class Siamese(nn.Module):
         dis = torch.abs(out1 - out2)
         out = self.out(dis)
         #  return self.sigmoid(out)
-        return out
+        # return out
+        return out1, out2
 
 
 
