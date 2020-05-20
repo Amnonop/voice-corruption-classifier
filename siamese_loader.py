@@ -52,7 +52,7 @@ class SiameseLoader:
 
         # Initialize targets so half of samples are from same class
         targets = torch.zeros((batch_size, ))
-        targets[batch_size // 2] = 1
+        targets[batch_size // 2:] = 1
         for i in range(batch_size):
             category = categories[i]
             first_index = np.random.randint(0, num_examples)
