@@ -3,7 +3,7 @@ import torch
 
 
 class Siamese(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self):
         super(Siamese, self).__init__()
 
         self.conv_block1 = nn.Sequential(
