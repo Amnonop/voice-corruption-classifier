@@ -1,6 +1,7 @@
 from pathlib import Path
 import time
 
+import torch
 from torch.optim import Adam
 from torch.nn.functional import pairwise_distance
 
@@ -37,10 +38,10 @@ def main():
 
     evaluate_every = 10  # interval for evaluating on one-shot tasks
     loss_every = 20  # interval for printing loss (iterations)
-    batch_size = 32
-    num_iterations = 20000
+    batch_size = 4
+    num_iterations = 100
     N_way = 20  # how many classes for testing one-shot tasks>
-    n_val = 250  # how many one-shot tasks to validate on?
+    n_val = 5  # how many one-shot tasks to validate on?
     best = -1
 
     loss_history = []
@@ -53,7 +54,7 @@ def main():
         (inputs, targets) = data_loader.get_batch(batch_size)
 
         # switch model to training mode
-        self.model.train()
+        model.train()
 
         # clear gradient accumulators
         optimizer.zero_grad()
@@ -73,7 +74,7 @@ def main():
 
         if i % evaluate_every == 0:
             print("Time for {0} iterations: {1}".format(i, time.time() - t_start))
-            val_acc = loader.test_oneshot(model, N_way, n_val, verbose=True)
+            val_acc = test_oneshot(model, data_loader, N_way, n_val)
             if val_acc >= best:
                 print("Current best: {0}, previous best: {1}".format(val_acc, best))
                 # print("Saving weights to: {0} \n".format(weights_path))
@@ -81,9 +82,9 @@ def main():
                 best = val_acc
 
         if i % loss_every == 0:
-            print("iteration {}, training loss: {:.2f},".format(i, loss.data[0]))
+            print("iteration {}, training loss: {:.2f},".format(i, loss.item()))
             loss_iterations.append(i)
-            loss_history.append(loss.data[0])
+            loss_history.append(loss.item())
 
     weights_path_2 = os.path.join(data_path, "model_weights.h5")
     model.load_weights(weights_path_2)
@@ -93,14 +94,18 @@ def test_oneshot(model, data_loader, N, k):
 
     print(f'Evaluating model on {k} random {N} way one-shot learning tasks.')
 
-    for i in range(k):
-        inputs, targets = data_loader.make_oneshot_task(N, s)
-        output1, output2 = model(inputs[0], inputs[1])
+    model.eval()
+    with torch.no_grad():
+        for i in range(k):
+            inputs, targets = data_loader.make_oneshot_task(N)
+            output1, output2 = model(inputs[0], inputs[1])
 
-        euclidean_distance = pairwise_distance(output1, output2)
+            euclidean_distance = pairwise_distance(output1, output2)
 
-        predictions = euclidean_distance < 1.0
-        number_correct += (predictions == targets).sum().item()
+            # Check the index of the minimal distance fits the index of the
+            # pair that is the similar pair
+            if torch.argmin(euclidean_distance) == torch.argmax(targets):
+                number_correct += 1
 
     percent_correct = (100.0 * number_correct / k)
     print(f'Got an average of {percent_correct}% {N} way one-shot learning accuracy')

@@ -48,7 +48,7 @@ class SiameseLoader:
         categories = np.random.choice(num_classes, size=(batch_size, ), replace=False)
 
         # Initialize the pairs tensor
-        pairs = [torch.zeros((batch_size, SAMPLE_SIZE)) for i in range(2)]
+        pairs = [torch.zeros((batch_size, 1, SAMPLE_SIZE)) for i in range(2)]
 
         # Initialize targets so half of samples are from same class
         targets = torch.zeros((batch_size, ))
@@ -56,7 +56,7 @@ class SiameseLoader:
         for i in range(batch_size):
             category = categories[i]
             first_index = np.random.randint(0, num_examples)
-            pairs[0][i, :] = self._load_sample(x[category, first_index])
+            pairs[0][i, :, :] = self._load_sample(x[category, first_index])
 
             second_index = np.random.randint(0, num_examples)
             if i >= batch_size // 2:
@@ -64,7 +64,7 @@ class SiameseLoader:
             else:
                 second_category = (category + np.random.randint(1, num_classes)) % num_classes
 
-            pairs[1][i, :] = self._load_sample(x[second_category, second_index])
+            pairs[1][i, :, :] = self._load_sample(x[second_category, second_index])
 
         return pairs, targets
 
@@ -77,11 +77,10 @@ class SiameseLoader:
         true_category = categories[0]
         first_example, second_example = np.random.choice(num_examples, replace=False, size=(2, ))
 
-        test_sample = torch.stack([self._load_sample(x[true_category, first_example])] * N).reshape(N, SAMPLE_SIZE)
+        test_sample = torch.stack([self._load_sample(x[true_category, first_example])] * N)
 
         support_set = torch.stack([self._load_sample(sample_filename) for sample_filename in x[categories, indices]])
-        support_set[0, :] = self._load_sample(x[true_category, second_example])
-        support_set = support_set.reshape(N, SAMPLE_SIZE)
+        support_set[0, :, :] = self._load_sample(x[true_category, second_example])
 
         targets = torch.zeros((N, ))
         targets[0] = 1

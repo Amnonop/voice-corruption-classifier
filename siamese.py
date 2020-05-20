@@ -37,7 +37,8 @@ class Siamese(nn.Module):
         self.avg_pool = nn.AvgPool1d(9)
         #self.softmax_layer = nn.Linear(512, num_classes)
 
-        self.linear = nn.Sequential(nn.Linear(512, 256), nn.Sigmoid())
+        # self.linear = nn.Sequential(nn.Linear(512, 256), nn.Sigmoid())
+        self.linear = nn.Linear(512, 256)
 
         self.out = nn.Sequential(nn.Linear(256, 1), nn.Sigmoid())
 
@@ -59,8 +60,8 @@ class Siamese(nn.Module):
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)
         out2 = self.forward_one(x2)
-        dis = torch.abs(out1 - out2)
-        out = self.out(dis)
+        # dis = torch.abs(out1 - out2)
+        # out = self.out(dis)
         #  return self.sigmoid(out)
         # return out
         return out1, out2
