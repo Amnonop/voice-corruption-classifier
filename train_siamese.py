@@ -1,4 +1,5 @@
 from pathlib import Path
+import uuid
 import time
 
 import torch
@@ -21,7 +22,7 @@ def main():
 
     data_dir_path = Path.cwd().joinpath(DATA_DIR)
 
-    results_dir_path = Path.cwd().joinpath(RESULTS_DIR)
+    results_dir_path = Path.cwd().joinpath('./siamese_results')
     current_run_path = create_results_directories(results_dir_path)
 
     transforms = TransformsComposer([Rescale(output_size=SAMPLE_SIZE), ToTensor()])
@@ -33,16 +34,19 @@ def main():
     one_shot = data_loader.make_oneshot_task(20)
 
     model = Siamese()
-    criterion = ContrastiveLoss()
+    criterion = ContrastiveLoss(margin=0.05)
     optimizer = Adam(model.parameters(), lr=0.0005)
 
     evaluate_every = 10  # interval for evaluating on one-shot tasks
     loss_every = 20  # interval for printing loss (iterations)
-    batch_size = 4
-    num_iterations = 100
+    batch_size = 32
+    num_iterations = 2000
     N_way = 20  # how many classes for testing one-shot tasks>
-    n_val = 5  # how many one-shot tasks to validate on?
+    n_val = 250  # how many one-shot tasks to validate on?
     best = -1
+
+    state_filename = f'{uuid.uuid1()}_state_{num_iterations}_iters.pth'
+    state_path = current_run_path.joinpath('best_snapshot').joinpath(state_filename)
 
     loss_history = []
     loss_iterations = []
@@ -77,8 +81,8 @@ def main():
             val_acc = test_oneshot(model, data_loader, N_way, n_val)
             if val_acc >= best:
                 print("Current best: {0}, previous best: {1}".format(val_acc, best))
-                # print("Saving weights to: {0} \n".format(weights_path))
-                # model.save_weights(weights_path_2)
+                print("Saving weights to: {0} \n".format(state_path))
+                torch.save(model.state_dict(), state_path)
                 best = val_acc
 
         if i % loss_every == 0:
@@ -86,8 +90,8 @@ def main():
             loss_iterations.append(i)
             loss_history.append(loss.item())
 
-    weights_path_2 = os.path.join(data_path, "model_weights.h5")
-    model.load_weights(weights_path_2)
+    # weights_path_2 = os.path.join(data_path, "model_weights.h5")
+    # model.load_weights(weights_path_2)
 
 def test_oneshot(model, data_loader, N, k):
     number_correct = 0
@@ -101,10 +105,11 @@ def test_oneshot(model, data_loader, N, k):
             output1, output2 = model(inputs[0], inputs[1])
 
             euclidean_distance = pairwise_distance(output1, output2)
+            # print(f'Eval iter {i}: {euclidean_distance}')
 
             # Check the index of the minimal distance fits the index of the
             # pair that is the similar pair
-            if torch.argmin(euclidean_distance) == torch.argmax(targets):
+            if torch.argmin(euclidean_distance) == torch.argmin(targets):
                 number_correct += 1
 
     percent_correct = (100.0 * number_correct / k)
