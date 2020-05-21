@@ -51,8 +51,10 @@ class SiameseLoader:
         pairs = [torch.zeros((batch_size, 1, SAMPLE_SIZE)) for i in range(2)]
 
         # Initialize targets so half of samples are from same class
-        targets = torch.zeros((batch_size, ))
-        targets[batch_size // 2:] = 1
+        # 0 - SAME CLASS
+        # 1 - DIFFERENT CLASS
+        targets = torch.ones((batch_size, ))
+        targets[batch_size // 2:] = 0
         for i in range(batch_size):
             category = categories[i]
             first_index = np.random.randint(0, num_examples)
@@ -69,6 +71,8 @@ class SiameseLoader:
         return pairs, targets
 
     def make_oneshot_task(self, N, mode='test'):
+        # 0 - SAME CLASS
+        # 1 - DIFFERENT CLASS
         x = self._data[mode]
         num_classes, num_examples = x.shape
         indices = np.random.randint(0, num_examples, size=(N, ))
@@ -82,8 +86,8 @@ class SiameseLoader:
         support_set = torch.stack([self._load_sample(sample_filename) for sample_filename in x[categories, indices]])
         support_set[0, :, :] = self._load_sample(x[true_category, second_example])
 
-        targets = torch.zeros((N, ))
-        targets[0] = 1
+        targets = torch.ones((N, ))
+        targets[0] = 0
 
         targets, test_sample, support_set = shuffle(targets, test_sample, support_set)
         pairs = [test_sample, support_set]
