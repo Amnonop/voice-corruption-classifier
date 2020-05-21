@@ -112,6 +112,7 @@ def test_oneshot(model, data_loader, N, k):
             # pair that is the similar pair
             true_index = torch.argmin(targets)
             acc_figure = (euclidean_distance[true_index] - torch.min(euclidean_distance))/euclidean_distance[true_index]
+            print(f'acc_figure {acc_figure}')
             if acc_figure < 25:
                 number_correct += 1
 
