@@ -7,38 +7,63 @@ class Siamese(nn.Module):
         super(Siamese, self).__init__()
 
         self.conv_block1 = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=128, kernel_size=80, stride=4),
-            nn.BatchNorm1d(num_features=128),
+            nn.Conv1d(in_channels=1, out_channels=64, kernel_size=80, stride=4),
+            nn.BatchNorm1d(num_features=64),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=4)
         )
 
         self.conv_block2 = nn.Sequential(
+            nn.Conv1d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=64),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=64),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=4)
+        )
+
+        self.conv_block3 = nn.Sequential(
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=128),
+            nn.ReLU(),
             nn.Conv1d(in_channels=128, out_channels=128, kernel_size=3, stride=1),
             nn.BatchNorm1d(num_features=128),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=4)
         )
 
-        self.conv_block3 = nn.Sequential(
+        self.conv_block4 = nn.Sequential(
             nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=256),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=256),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, stride=1),
             nn.BatchNorm1d(num_features=256),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=4)
         )
 
-        self.conv_block4 = nn.Sequential(
+        self.conv_block5 = nn.Sequential(
             nn.Conv1d(in_channels=256, out_channels=512, kernel_size=3, stride=1),
             nn.BatchNorm1d(num_features=512),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=4)
+            nn.Conv1d(in_channels=512, out_channels=512, kernel_size=3, stride=1),
+            nn.BatchNorm1d(num_features=512),
+            nn.ReLU()
         )
 
-        self.avg_pool = nn.AvgPool1d(9)
+
+
+
+
+        self.avg_pool = nn.AvgPool1d(3)
         #self.softmax_layer = nn.Linear(512, num_classes)
 
         # self.linear = nn.Sequential(nn.Linear(512, 256), nn.Sigmoid())
-        self.linear = nn.Linear(512, 256)
+        self.linear = nn.Linear(4096, 256)
 
         self.out = nn.Sequential(nn.Linear(256, 1), nn.Sigmoid())
 
@@ -48,6 +73,8 @@ class Siamese(nn.Module):
         x = self.conv_block2(x)
         x = self.conv_block3(x)
         x = self.conv_block4(x)
+        x = self.conv_block5(x)
+
 
         # Global avg pooling
         x = self.avg_pool(x)  # [batch_size, 256, 1]

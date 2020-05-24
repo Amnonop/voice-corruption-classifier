@@ -7,4 +7,4 @@ STATES_DIR = 'states/'
 
 DATA_FILENAME_PREFIX = 'siamese_{0}.pickle'
 
-SAMPLE_SIZE = 10000
+SAMPLE_SIZE = 32000

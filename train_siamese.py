@@ -40,7 +40,7 @@ def main():
     evaluate_every = 10  # interval for evaluating on one-shot tasks
     loss_every = 20  # interval for printing loss (iterations)
     batch_size = 32
-    num_iterations = 2000
+    num_iterations = 50
     N_way = 20  # how many classes for testing one-shot tasks>
     n_val = 250  # how many one-shot tasks to validate on?
     best = -1
@@ -110,10 +110,10 @@ def test_oneshot(model, data_loader, N, k):
 
             # Check the index of the minimal distance fits the index of the
             # pair that is the similar pair
-            true_index = torch.argmin(targets)
-            acc_figure = (euclidean_distance[true_index] - torch.min(euclidean_distance))/euclidean_distance[true_index]
-            print(f'acc_figure {acc_figure}')
-            if acc_figure < 25:
+            #true_index = torch.argmin(targets)
+            #acc_figure = (euclidean_distance[true_index] - torch.min(euclidean_distance))/euclidean_distance[true_index]
+            #print(f'acc_figure {acc_figure}')
+            if torch.argmin(euclidean_distance) == torch.argmin(targets):
                 number_correct += 1
 
     percent_correct = (100.0 * number_correct / k)
