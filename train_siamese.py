@@ -34,15 +34,16 @@ def main():
     one_shot = data_loader.make_oneshot_task(20)
 
     model = Siamese()
-    criterion = ContrastiveLoss(margin=6)
-    optimizer = Adam(model.parameters(), lr=0.0005)
+    criterion = ContrastiveLoss(margin=3.5)
+    optimizer = Adam(model.parameters(), lr=0.00008)
 
     evaluate_every = 10  # interval for evaluating on one-shot tasks
     loss_every = 20  # interval for printing loss (iterations)
     batch_size = 32
-    num_iterations = 1000
+    num_iterations = 4000
+
     N_way = 5  # how many classes for testing one-shot tasks>
-    n_val = 50  # how many one-shot tasks to validate on?
+    n_val = 100  # how many one-shot tasks to validate on?
     best = -1
 
     state_filename = f'{uuid.uuid1()}_state_{num_iterations}_iters.pth'
