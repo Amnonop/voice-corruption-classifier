@@ -57,7 +57,7 @@ def main():
     y_test = encoder.transform(y_test)
     test_dataset = SimilarityDataset(x_test, y_test, classes_map, sample_logger, transforms)
 
-    model = Siamese(num_classes=len(classes_map))
+    model = Siamese()
 
     states_dir = Path.cwd().joinpath(STATES_DIR)
     state_filename = f'{uuid.uuid1()}_state_{epochs}_epochs.pth'

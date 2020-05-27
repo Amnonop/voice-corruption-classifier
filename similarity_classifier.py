@@ -35,17 +35,18 @@ class SimilarityClassifier:
             optimizer.zero_grad()
 
             # forward pass
-            output = self.model(first_sample['signal'], second_sample['signal'])
+            out1, out2 = self.model(first_sample['signal'], second_sample['signal'])
 
             # calculate loss of the network output with respect to the training labels
-            loss = criterion(output, label)
+            loss = criterion(out1, out2, label)
 
             # backpropagate and update optimizer learning rate
             loss.backward()
             optimizer.step()
             # 
             # Statistics
-            correct_count += ((output < 0.5) == label).sum().item()
+            output = torch.nn.functional.pairwise_distance(out1, out2)
+            correct_count += ((output < 1.0) == label).sum().item()
             train_loss += (loss.item() / batch_size)
             total += batch_size
 
@@ -71,12 +72,13 @@ class SimilarityClassifier:
             for first_sample, second_sample, label in data_loader:
                 batch_size = label.size(0)
 
-                output = self.model(first_sample['signal'], second_sample['signal'])
+                out1, out2 = self.model(first_sample['signal'], second_sample['signal'])
 
-                loss = criterion(output, label)
+                loss = criterion(out1, out2, label)
 
                 # Statistics
-                correct_count += ((output < 0.5) == label).sum().item()#(torch.max(output, 1)[1].view(label.size()) == label).sum().item()
+                output = torch.nn.functional.pairwise_distance(out1, out2)
+                correct_count += ((output < 1.0) == label).sum().item()#(torch.max(output, 1)[1].view(label.size()) == label).sum().item()
                 validation_loss += (loss.item() / batch_size)
                 total += batch_size
 
@@ -97,7 +99,7 @@ class SimilarityClassifier:
 
         learning_rate = 0.001
         optimizer = SGD(self.model.parameters(), lr=learning_rate, momentum=0.9)
-        loss_function = BCEWithLogitsLoss(size_average=True)
+        loss_function = ContrastiveLoss()#BCEWithLogitsLoss(size_average=False)
 
         # Train the network
         for epoch in range(epochs):
@@ -167,7 +169,9 @@ class SimilarityClassifier:
 
         with torch.no_grad():
             for first_sample, second_sample, targets in data_loader:
-                outputs = self.model(first_sample['signal'], second_sample['signal'])
+                out1, out2 = self.model(first_sample['signal'], second_sample['signal'])
+
+                outputs = torch.nn.functional.pairwise_distance(out1, out2)
                 predicted = (outputs < 0.5)#torch.max(outputs.data, 1)[1]
 
                 for i in range(len(targets)):
@@ -193,3 +197,22 @@ class SimilarityClassifier:
         for i in range(len(classes)):
             print('Accuracy of {:.9s} : {:.2f} %'.format(
                 classes[i], 100 * class_correct[i] / class_total[i]))
+
+
+class ContrastiveLoss(torch.nn.Module):
+    """
+    Contrastive loss function.
+    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    """
+
+    def __init__(self, margin=2.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, output1, output2, label):
+        euclidean_distance = torch.nn.functional.pairwise_distance(output1, output2)
+        loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
+                                      (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+
+
+        return loss_contrastive
