@@ -62,14 +62,14 @@ def main():
     train_loss_history, val_loss_history = classifier.fit(train_dataset, batch_size=batch_size, epochs=epochs,
                                                           validation_data=test_dataset)
 
-    # plt.figure()
-    # plt.title(f'Model Loss for {epochs} epochs')
-    # plt.xlabel('epoch')
-    # plt.ylabel('loss')
-    # plt.plot(train_loss_history, label='train')
-    # plt.plot(val_loss_history, label='test')
-    # plt.legend()
-    # plt.show()
+    plt.figure()
+    plt.title(f'Model Loss for {epochs} epochs')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.plot(train_loss_history, label='train')
+    plt.plot(val_loss_history, label='test')
+    plt.legend()
+    plt.show()
     
     predictions_path = current_run_path.joinpath('./predicted.csv')
     validation_dataset = AudioDataset(x_test, y_test, transforms)

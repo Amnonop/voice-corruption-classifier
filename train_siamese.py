@@ -2,6 +2,9 @@ from pathlib import Path
 import uuid
 import time
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 import torch
 from torch.optim import Adam
 from torch.nn.functional import pairwise_distance
@@ -40,7 +43,7 @@ def main():
     evaluate_every = 10  # interval for evaluating on one-shot tasks
     loss_every = 20  # interval for printing loss (iterations)
     batch_size = 32
-    num_iterations = 4000
+    num_iterations = 100
 
     N_way = 5  # how many classes for testing one-shot tasks>
     n_val = 100  # how many one-shot tasks to validate on?
@@ -76,6 +79,7 @@ def main():
 
         print("\n ------------- \n")
         print("Loss: {0}".format(loss))
+        loss_history.append(loss.item())
 
         if i % evaluate_every == 0:
             print("Time for {0} iterations: {1}".format(i, time.time() - t_start))
@@ -90,10 +94,17 @@ def main():
             print("iteration {}, training loss: {:.2f},".format(i, loss.item()))
             loss_iterations.append(i)
             loss_history.append(loss.item())
-
+    plt.figure()
+    plt.title(f'Model Loss for iterations')
+    plt.xlabel('iteration')
+    plt.ylabel('loss')
+    plt.plot(loss_history, label='train')
+    #plt.plot(loss_iterations, label='test')
+    plt.legend()
+    plt.show()
     # weights_path_2 = os.path.join(data_path, "model_weights.h5")
     # model.load_weights(weights_path_2)
-
+    print ("A")
 def test_oneshot(model, data_loader, N, k):
     number_correct = 0
 
@@ -117,9 +128,13 @@ def test_oneshot(model, data_loader, N, k):
             if torch.argmin(euclidean_distance) == torch.argmin(targets):
                 number_correct += 1
 
+
+
+
     percent_correct = (100.0 * number_correct / k)
     print(f'Got an average of {percent_correct}% {N} way one-shot learning accuracy')
     return percent_correct
+
 
 
 if __name__ == '__main__':
