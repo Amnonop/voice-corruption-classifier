@@ -59,10 +59,6 @@ class SiameseM5(nn.Module):
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)
         out2 = self.forward_one(x2)
-        # dis = torch.abs(out1 - out2)
-        # out = self.out(dis)
-        #  return self.sigmoid(out)
-        # return out
         return out1, out2
 
 
