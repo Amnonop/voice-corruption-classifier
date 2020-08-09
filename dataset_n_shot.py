@@ -6,7 +6,7 @@ import torch
 
 from commons import SAMPLE_SIZE
 
-DATASET_FILENAME = 'siamese_{0}_{SAMPLE_SIZE}.npy'
+DATASET_FILENAME = 'siamese_{0}_{1}.npy'
 
 CLASS_SAMPLES = 10
 
@@ -15,8 +15,8 @@ class AudioNShot:
         self.resize = sample_size
         self.device = device
         data = ['train', 'test']
-        self.x_train = np.load(Path(root).joinpath(DATASET_FILENAME.format('train')))
-        self.x_test = np.load(Path(root).joinpath(DATASET_FILENAME.format('train')))
+        self.x_train = np.load(Path(root).joinpath(DATASET_FILENAME.format('train', SAMPLE_SIZE)))
+        self.x_test = np.load(Path(root).joinpath(DATASET_FILENAME.format('test', SAMPLE_SIZE)))
 
         self.batch_size = batch_size
         self.num_classes = self.x_train.shape[0] + self.x_test.shape[0]
@@ -44,12 +44,12 @@ class AudioNShot:
         data_cache = []
 
         for sample in range(10):
-            x_support_sets, y_support_sets = []
-            x_query_sets, y_query_sets = []
+            x_support_sets, y_support_sets = [], []
+            x_query_sets, y_query_sets = [], []
 
             for i in range(self.batch_size):
-                x_support, y_support = []
-                x_query, y_query = []
+                x_support, y_support = [], []
+                x_query, y_query = [], []
                 selected_classes = np.random.choice(data_pack.shape[0], self.n_way, False)
 
                 for j, current_class in enumerate(selected_classes):
@@ -58,8 +58,8 @@ class AudioNShot:
                     x_support.append(data_pack[current_class][selected_audios[:self.k_shot]])
                     x_query.append(data_pack[current_class][selected_audios[self.k_shot:]])
 
-                    y_support.append(j * self.k_shot)
-                    y_query.append(j * self.k_query)
+                    y_support.append([j for _ in range(self.k_shot)])
+                    y_query.append([j  for _ in range(self.k_query)])
 
                 # Shuffle this batch
                 permutations = np.random.permutation(self.n_way * self.k_shot)
