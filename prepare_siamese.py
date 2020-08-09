@@ -123,7 +123,7 @@ def load_sample(sample_filename: str, transform: TransformsComposer = None) -> T
     return signal
 
 
-def pickle_test_data(pickle_path: Path, target_path: Path, class_map_path: Path):
+def pickle_data(pickle_path: Path, target_path: Path, class_map_path: Path):
     transforms = TransformsComposer([Rescale(output_size=SAMPLE_SIZE)])
 
     with pickle_path.open(mode='rb') as pickle_file:
@@ -152,18 +152,23 @@ def main():
     dataset_dir = config['dataset_dir']
 
     print(f'Getting speakers data from {dataset_dir}')
-    # speakers = get_speakers_data(dataset_dir)
+    speakers = get_speakers_data(dataset_dir)
 
     csv_dir = config['csv_path']
 
-    #write_files(CSV_FILENAME_PREFIX, csv_dir, speakers)
+    write_files(CSV_FILENAME_PREFIX, csv_dir, speakers)
 
-    # pickle_data(CSV_FILENAME_PREFIX, csv_dir)
+    pickle_data(CSV_FILENAME_PREFIX, csv_dir)
 
     pickle_file = Path.cwd().joinpath(csv_dir).joinpath('siamese_train.pickle')
     target_file = Path.cwd().joinpath(csv_dir).joinpath(f'siamese_train_{SAMPLE_SIZE}.npy')
     class_map_file = Path.cwd().joinpath(csv_dir).joinpath('speakers_class_map_train.json')
-    pickle_test_data(pickle_file, target_file, class_map_file)
+    pickle_data(pickle_file, target_file, class_map_file)
+
+    pickle_file = Path.cwd().joinpath(csv_dir).joinpath('siamese_test.pickle')
+    target_file = Path.cwd().joinpath(csv_dir).joinpath(f'siamese_test_{SAMPLE_SIZE}.npy')
+    class_map_file = Path.cwd().joinpath(csv_dir).joinpath('speakers_class_map_test.json')
+    pickle_data(pickle_file, target_file, class_map_file)
 
     print('Done')
 
