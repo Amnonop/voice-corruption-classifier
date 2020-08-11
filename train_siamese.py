@@ -2,6 +2,8 @@ from pathlib import Path
 import uuid
 import time
 
+import numpy as np
+
 import torch
 from torch.optim import Adam
 from torch.nn.functional import pairwise_distance
@@ -15,8 +17,19 @@ from siamese import Siamese
 from contrastive_loss import ContrastiveLoss
 
 DATA_DIR = './data'
+SEED = 1
 
 def main():
+    seed = SEED
+
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+
+    # Set up the dataset loader
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     config_filename = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
     config = Configuration(config_filename)
 
@@ -28,12 +41,12 @@ def main():
     transforms = TransformsComposer([Rescale(output_size=SAMPLE_SIZE), ToTensor()])
 
     # Load data
-    data_loader = SiameseLoader(data_dir_path, transforms)
+    data_loader = SiameseLoader(data_dir_path, device)
 
     batch = data_loader.get_batch(4)
     one_shot = data_loader.make_oneshot_task(20)
 
-    model = Siamese()
+    model = Siamese().to(device)
     criterion = ContrastiveLoss(margin=3.5)
     optimizer = Adam(model.parameters(), lr=0.00008)
 
