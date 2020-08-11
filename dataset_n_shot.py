@@ -14,7 +14,6 @@ class AudioNShot:
     def __init__(self, root: str, batch_size: int, n_way: int, k_shot: int, k_query: int, sample_size: int, device=None):
         self.resize = sample_size
         self.device = device
-        data = ['train', 'test']
         self.x_train = np.load(Path(root).joinpath(DATASET_FILENAME.format('train', SAMPLE_SIZE)))
         self.x_test = np.load(Path(root).joinpath(DATASET_FILENAME.format('test', SAMPLE_SIZE)))
 
