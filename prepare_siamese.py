@@ -3,14 +3,19 @@ import shutil
 import csv
 import pickle
 from pathlib import Path
+import json
 
 import numpy as np
 from numpy import array
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import librosa
+import torch
+from torch import Tensor
 
-from commons import CONFIGS_DIR, DATA_FILENAME_PREFIX
+from commons import CONFIGS_DIR, DATA_FILENAME_PREFIX, SAMPLE_SIZE
 from configuration import load_config
+from dataset_transforms import TransformsComposer, ToTensor, Rescale
 
 CONFIG_FILENAME = 'prepare_config.json'
 CSV_FILENAME_PREFIX = 'siamese_speakers_{0}.csv'
@@ -107,6 +112,39 @@ def pickle_data(csv_filename_prefix: str, csv_dir:str):
             print(f'Pickling {pickle_filepath}')
             pickle.dump((data, categories, classes_map), pickle_file)
 
+
+def load_sample(sample_filename: str, transform: TransformsComposer = None) -> Tensor:
+    sample_path = Path(sample_filename)
+    signal, sampling_rate = librosa.load(sample_path)
+
+    if transform:
+        signal = transform(signal)
+
+    return signal
+
+
+def pickle_data(pickle_path: Path, target_path: Path, class_map_path: Path):
+    transforms = TransformsComposer([Rescale(output_size=SAMPLE_SIZE)])
+
+    with pickle_path.open(mode='rb') as pickle_file:
+        print(f'Unpickling {pickle_path}')
+        (data, categories, classes_map) = pickle.load(pickle_file)
+
+    x = np.zeros(shape=(data.shape[0], 10, SAMPLE_SIZE))
+    for i, speaker in enumerate(data):
+        for j, filename in enumerate(speaker):
+            signal = load_sample(filename, transforms)
+            x[i, j, :] = signal
+
+    with target_path.open(mode='wb') as target_file:
+        print(f'Saving data to {target_path}')
+        np.save(target_file, x)
+
+    with class_map_path.open(mode="w") as class_map_file:
+        print(f'Saving classes map to {class_map_path}')
+        json.dump(classes_map, class_map_file)
+
+
 def main():
     config_path = Path.cwd().joinpath(CONFIGS_DIR).joinpath(CONFIG_FILENAME)
     config = load_config(config_path)
@@ -121,6 +159,16 @@ def main():
     write_files(CSV_FILENAME_PREFIX, csv_dir, speakers)
 
     pickle_data(CSV_FILENAME_PREFIX, csv_dir)
+
+    pickle_file = Path.cwd().joinpath(csv_dir).joinpath('siamese_train.pickle')
+    target_file = Path.cwd().joinpath(csv_dir).joinpath(f'siamese_train_{SAMPLE_SIZE}.npy')
+    class_map_file = Path.cwd().joinpath(csv_dir).joinpath('speakers_class_map_train.json')
+    pickle_data(pickle_file, target_file, class_map_file)
+
+    pickle_file = Path.cwd().joinpath(csv_dir).joinpath('siamese_test.pickle')
+    target_file = Path.cwd().joinpath(csv_dir).joinpath(f'siamese_test_{SAMPLE_SIZE}.npy')
+    class_map_file = Path.cwd().joinpath(csv_dir).joinpath('speakers_class_map_test.json')
+    pickle_data(pickle_file, target_file, class_map_file)
 
     print('Done')
 
